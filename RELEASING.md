@@ -3,13 +3,20 @@
 ## Fluxo normal
 
 1. Trabalhe e faça commits na `development`. Pushes e pull requests dessa branch
-   **não disparam Actions**. Execute os testes localmente antes de enviar o PR.
+   **não disparam workflows de build** (a classificação de issues é independente).
+   Não envie commits diretamente à `main`; se estiver nela, troque para
+   `development` antes de editar. Execute os testes localmente antes de enviar o PR.
+   Ao iniciar a próxima versão, crie seu novo changelog (por exemplo,
+   `docs/en_US/changelog/release/v1.0.1.md`) e atualize-o ao longo do desenvolvimento,
+   junto do equivalente em português. Não acrescente novidades às notas já publicadas.
 2. Quando estiver pronto para publicar, altere `RELEASE_VERSION`, na raiz, para a
    versão desejada, por exemplo `1.0.0` (sem `v`). Essa alteração é a flag de release.
 3. Escreva `docs/en_US/changelog/release/v1.0.0.md`. O conteúdo desse arquivo será
    usado integralmente como descrição da release. Atualize também o changelog em
    português e `CHANGELOG.md` para a documentação do launcher.
-4. Revise e faça merge na `main`. O workflow **Release Linux** só é disparado
+4. Revise e faça merge de `development` na `main`, preservando os commits com
+   merge commit. A flag é o arquivo `RELEASE_VERSION`, não uma opção do Git ou
+   mensagem especial de merge. O workflow **Release Linux** só é disparado
    automaticamente se `RELEASE_VERSION` mudou. Um merge comum, sem mudar esse
    arquivo, roda apenas **Build and test** e não publica nada.
 5. Aprove o ambiente protegido `curseforge-release` no GitHub. Revise o commit
