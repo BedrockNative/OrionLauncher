@@ -11,9 +11,23 @@ public sealed record RuntimeDefinition(string Name, Repository Repository, strin
     public static RuntimeDefinition WineGdk { get; } = new("winegdk", new("BedrockNative", "WineGDK"), "wine-", ["wine", "wineboot", "wineserver"]);
 }
 
+public sealed record RuntimeUpdate(string Name, string? InstalledTag, string LatestTag)
+{
+    public bool Available => !string.Equals(InstalledTag?.TrimStart('v'), LatestTag.TrimStart('v'), StringComparison.Ordinal);
+}
+
 public sealed class RuntimeManager(AppPaths paths, IReleaseClient releases, AssetDownloader downloader, string? bundledRoot = null)
 {
     private readonly SemaphoreSlim gate = new(1, 1);
+
+    // Startup checks only inspect metadata; runtime downloads remain explicit.
+    public async Task<RuntimeUpdate> CheckForUpdatesAsync(RuntimeDefinition definition, CancellationToken ct)
+    {
+        var release = await releases.GetLatestAsync(definition.Repository, ct);
+        SelectAsset(definition, release);
+        var installed = await GetInstalledAsync(definition, ct);
+        return new(definition.Name, installed?.Tag, release.Tag);
+    }
 
     private async Task<RuntimeInstallation?> BundledAsync(RuntimeDefinition definition, CancellationToken ct)
     {

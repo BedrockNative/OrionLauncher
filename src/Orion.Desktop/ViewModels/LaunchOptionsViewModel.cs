@@ -33,6 +33,8 @@ public sealed record MangoHudPositionChoice(MangoHudPosition Position, string La
 public partial class LaunchOptionsViewModel : ObservableObject
 {
     private readonly Func<string?, XboxProfileViewModel?>? profileFor;
+    private readonly Func<bool> hasMangoHudSystemConfiguration;
+    private bool? mangoHudSystemConfigPreference;
     public Guid InstanceId { get; }
     [ObservableProperty] private string name;
     [ObservableProperty] private bool desktopShortcut;
@@ -60,7 +62,11 @@ public partial class LaunchOptionsViewModel : ObservableObject
     [ObservableProperty] private string height;
     [ObservableProperty] private bool fullscreen;
     [ObservableProperty] private bool showLogOnLaunch;
-    [ObservableProperty] private bool mangoHudEnabled;
+    [ObservableProperty] [NotifyPropertyChangedFor(nameof(CanEditMangoHudMetrics))] private bool mangoHudEnabled;
+    [ObservableProperty] [NotifyPropertyChangedFor(nameof(CanEditMangoHudMetrics))] private bool mangoHudUseSystemConfig;
+    public bool CanEditMangoHudMetrics => MangoHudEnabled && !MangoHudUseSystemConfig;
+    partial void OnMangoHudUseSystemConfigChanged(bool value) => mangoHudSystemConfigPreference = value;
+    partial void OnEnvironmentLinesChanged(string value) => RefreshMangoHudSystemConfig();
     [ObservableProperty] private bool mangoHudFps;
     [ObservableProperty] private bool mangoHudFrameTime;
     [ObservableProperty] private bool mangoHudCpu;
@@ -74,7 +80,29 @@ public partial class LaunchOptionsViewModel : ObservableObject
     [ObservableProperty] private bool mangoHudAvailable;
     [ObservableProperty] private MangoHudPositionChoice selectedMangoHudPosition;
     public IReadOnlyList<MangoHudPositionChoice> MangoHudPositions { get; }
-    [RelayCommand] private void RefreshMangoHud() => MangoHudAvailable = MangoHudIntegration.IsAvailable;
+    [RelayCommand] private void RefreshMangoHud()
+    {
+        MangoHudAvailable = MangoHudIntegration.IsAvailable;
+        RefreshMangoHudSystemConfig();
+    }
+
+    private void RefreshMangoHudSystemConfig()
+    {
+        var preference = mangoHudSystemConfigPreference;
+        MangoHudUseSystemConfig = preference ?? hasMangoHudSystemConfiguration();
+        mangoHudSystemConfigPreference = preference;
+    }
+
+    private bool DetectMangoHudSystemConfig()
+    {
+        Dictionary<string, string?> environment = new(StringComparer.Ordinal);
+        foreach (var line in Lines(EnvironmentLines))
+        {
+            var separator = line.IndexOf('=');
+            if (separator > 0) environment[line[..separator].Trim()] = line[(separator + 1)..];
+        }
+        return MangoHudIntegration.HasSystemConfiguration(environment);
+    }
     public ObservableCollection<MonitorResolutionChoice> MonitorResolutions { get; } = [];
     [ObservableProperty] private MonitorResolutionChoice? selectedMonitorResolution;
     public bool ResolutionIsLocked => SelectedMonitorResolution?.Resolution is not null;
@@ -103,9 +131,11 @@ public partial class LaunchOptionsViewModel : ObservableObject
     }
 
     public LaunchOptionsViewModel(GameInstance instance, Localizer? text = null, IEnumerable<XboxAccount>? accounts = null, CoverStore? covers = null,
-        Func<string?, XboxProfileViewModel?>? profiles = null, InstanceCardViewModel? card = null)
+        Func<string?, XboxProfileViewModel?>? profiles = null, InstanceCardViewModel? card = null,
+        Func<bool>? hasMangoHudSystemConfiguration = null)
     {
         profileFor = profiles;
+        this.hasMangoHudSystemConfiguration = hasMangoHudSystemConfiguration ?? DetectMangoHudSystemConfig;
         InstanceId = instance.Id; name = instance.Name; desktopShortcut = instance.DesktopShortcut;
         Card = card;
         Text = text ?? new();
@@ -172,7 +202,8 @@ public partial class LaunchOptionsViewModel : ObservableObject
             Fullscreen = CustomResolution && Fullscreen, ShowLogOnLaunch = ShowLogOnLaunch,
             MangoHud = new()
             {
-                Enabled = MangoHudEnabled, Fps = MangoHudFps, FrameTime = MangoHudFrameTime,
+                Enabled = MangoHudEnabled, UseSystemConfig = mangoHudSystemConfigPreference,
+                Fps = MangoHudFps, FrameTime = MangoHudFrameTime,
                 Cpu = MangoHudCpu, Gpu = MangoHudGpu, Ram = MangoHudRam, Vram = MangoHudVram,
                 CpuTemperature = MangoHudCpuTemperature, GpuTemperature = MangoHudGpuTemperature,
                 Battery = MangoHudBattery, Resolution = MangoHudResolution,
@@ -188,6 +219,8 @@ public partial class LaunchOptionsViewModel : ObservableObject
 
     private void LoadMangoHud(MangoHudOptions hud)
     {
+        mangoHudSystemConfigPreference = hud.UseSystemConfig;
+        RefreshMangoHudSystemConfig();
         MangoHudEnabled = hud.Enabled; MangoHudFps = hud.Fps; MangoHudFrameTime = hud.FrameTime;
         MangoHudCpu = hud.Cpu; MangoHudGpu = hud.Gpu; MangoHudRam = hud.Ram; MangoHudVram = hud.Vram;
         MangoHudCpuTemperature = hud.CpuTemperature; MangoHudGpuTemperature = hud.GpuTemperature;

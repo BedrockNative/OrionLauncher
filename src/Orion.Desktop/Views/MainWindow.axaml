@@ -97,9 +97,17 @@
     </Border>
 
     <Grid x:Name="MainContent" Grid.Column="1" Margin="36,32,36,20" RowDefinitions="Auto,*">
-      <Border Grid.Row="0" IsVisible="{Binding HasError}" Background="{DynamicResource OrionErrorSurfaceBrush}" BorderBrush="{DynamicResource OrionErrorBorderBrush}" BorderThickness="1" CornerRadius="10" Padding="16" Margin="0,0,0,18">
+      <StackPanel Grid.Row="0">
+      <Border IsVisible="{Binding HasError}" Background="{DynamicResource OrionErrorSurfaceBrush}" BorderBrush="{DynamicResource OrionErrorBorderBrush}" BorderThickness="1" CornerRadius="10" Padding="16" Margin="0,0,0,18">
         <Grid ColumnDefinitions="*,Auto"><TextBlock Text="{Binding Error}" TextWrapping="Wrap" Foreground="{DynamicResource OrionErrorTextBrush}" /><Button Grid.Column="1" Content="×" Command="{Binding DismissErrorCommand}" Classes="subtle" /></Grid>
       </Border>
+      <Border IsVisible="{Binding RuntimeUpdates.HasUpdates}" Background="{DynamicResource OrionMaterialBrush}" BorderBrush="{DynamicResource OrionBorderBrush}" BorderThickness="1" CornerRadius="10" Padding="16" Margin="0,0,0,18">
+        <Grid ColumnDefinitions="*,Auto">
+          <TextBlock Text="{Binding RuntimeUpdates.Status}" TextWrapping="Wrap" VerticalAlignment="Center" Margin="0,0,16,0" />
+          <Button Grid.Column="1" Content="{Binding Text[UpdateRuntimes]}" Command="{Binding UpdateRuntimesCommand}" IsEnabled="{Binding IsIdle}" />
+        </Grid>
+      </Border>
+      </StackPanel>
       <Grid Grid.Row="1">
         <Grid IsVisible="{Binding IsLibrary}" RowDefinitions="Auto,Auto,*,Auto">
           <Grid ColumnDefinitions="*,Auto" Margin="0,0,0,26">

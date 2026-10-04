@@ -25,7 +25,7 @@
   "MangoHudTopRight": "Superior direito",
   "MangoHudBottomLeft": "Inferior esquerdo",
   "MangoHudBottomRight": "Inferior direito",
-  "MangoHudHint": "Afeta apenas a inicialização do jogo desta instância. As métricas têm prioridade sobre a configuração global do MangoHud e o MANGOHUD_CONFIG avançado enquanto a integração automática estiver ativa. Desative-a para usar seu próprio comando/variáveis. Temperaturas exigem o respectivo painel CPU/GPU; sensores dependem do hardware e dos drivers. Gamescope exige uma configuração própria de mangoapp. Nenhum limite de FPS ou registro automático é ativado.",
+  "MangoHudHint": "Afeta apenas a inicialização do jogo desta instância. Com a configuração do sistema desativada, estas métricas têm prioridade sobre os ajustes globais e o MANGOHUD_CONFIG. Temperaturas exigem o respectivo painel CPU/GPU; sensores dependem do hardware e dos drivers. Gamescope exige uma configuração própria de mangoapp. Nenhum limite de FPS ou registro automático é ativado.",
   "OpenContentFolder": "Abrir com.mojang",
   "ContentStorageHint": "O GDK guarda addons/texturas compartilhados e os mundos de cada perfil em pastas com.mojang separadas. Escolha o local desejado.",
   "ContentStorageMissing": "Não foi encontrada uma pasta de conteúdo da instância.",
@@ -320,5 +320,13 @@
   "ConfirmArchive": "Arquivar instância", "LocalVersion": "Pacote importado", "Installing": "Trabalhando…", "Done": "Tudo pronto",
   "Source": "Pacote", "CatalogOffline": "Exibindo versões em cache; não foi possível atualizar o catálogo.",
   "ExitTitle": "Sair do Orion?", "ExitText": "Downloads serão pausados e retomados na próxima abertura. Jogos em execução serão encerrados. Salve seu mundo antes.",
-  "RuntimeBusy": "Feche todas as instâncias antes de atualizar os runtimes.", "InstallHint": "É necessária uma licença válida do Minecraft para Windows. Entre primeiro pela aba Conta."
+  "RuntimeBusy": "Feche todas as instâncias antes de atualizar os runtimes.", "InstallHint": "É necessária uma licença válida do Minecraft para Windows. Entre primeiro pela aba Conta.",
+  "MangoHudSystemConfig": "Usar configuração do sistema",
+  "MangoHudSystemConfigHint": "Ativado por padrão quando uma configuração do MangoHud é detectada. Desabilita as métricas e a posição da instância, preservando suas escolhas salvas.",
+  "RuntimeCheckOnStartup": "Verificar atualizações do Xodus e WineGDK ao iniciar",
+  "RuntimeCheckOnStartupHint": "Verifica em segundo plano ao abrir o Orion. As atualizações só são baixadas e instaladas ao selecionar Atualizar runtimes.",
+  "RuntimeChecking": "Verificando atualizações dos runtimes…",
+  "RuntimeUpdatesAvailable": "Atualizações de runtimes disponíveis:",
+  "RuntimeUpToDate": "Xodus e WineGDK estão atualizados.",
+  "RuntimeCheckFailed": "Não foi possível verificar atualizações de:"
 }

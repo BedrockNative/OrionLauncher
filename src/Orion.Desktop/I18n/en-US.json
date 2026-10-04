@@ -25,7 +25,7 @@
   "MangoHudTopRight": "Top right",
   "MangoHudBottomLeft": "Bottom left",
   "MangoHudBottomRight": "Bottom right",
-  "MangoHudHint": "Only affects this instance's game launch. Metrics override global MangoHud configuration and advanced MANGOHUD_CONFIG while automatic integration is enabled. Disable it to use your own wrapper/environment settings. Temperatures require the respective CPU/GPU panel; sensors depend on your hardware and drivers. Gamescope requires its own mangoapp setup. No FPS limit or automatic logging is enabled.",
+  "MangoHudHint": "Only affects this instance’s game launch. With system configuration disabled, these metrics override global MangoHud settings and MANGOHUD_CONFIG. Temperatures require the respective CPU/GPU panel; sensors depend on your hardware and drivers. Gamescope requires its own mangoapp setup. No FPS limit or automatic logging is enabled.",
   "OpenContentFolder": "Open com.mojang",
   "ContentStorageHint": "GDK stores shared addons/textures and each profile's worlds in separate com.mojang folders. Choose the location you need.",
   "ContentStorageMissing": "No instance content storage was found.",
@@ -320,5 +320,13 @@
   "ConfirmArchive": "Archive instance", "LocalVersion": "Imported package", "Installing": "Working…", "Done": "All set",
   "Source": "Package", "CatalogOffline": "Showing cached versions; the catalog could not be refreshed.",
   "ExitTitle": "Quit Orion?", "ExitText": "Downloads will pause and resume next time. Running games will be stopped. Save your world first.",
-  "RuntimeBusy": "Close all game instances before updating runtimes.", "InstallHint": "A valid Minecraft for Windows license is required. Use the Account tab to sign in first."
+  "RuntimeBusy": "Close all game instances before updating runtimes.", "InstallHint": "A valid Minecraft for Windows license is required. Use the Account tab to sign in first.",
+  "MangoHudSystemConfig": "Use system configuration",
+  "MangoHudSystemConfigHint": "Enabled by default when a MangoHud configuration is detected. Instance metrics and position are disabled while your saved choices are preserved.",
+  "RuntimeCheckOnStartup": "Check Xodus and WineGDK updates on startup",
+  "RuntimeCheckOnStartupHint": "Checks in the background when Orion opens. Updates are downloaded and installed only when you select Update runtimes.",
+  "RuntimeChecking": "Checking runtime updates…",
+  "RuntimeUpdatesAvailable": "Runtime updates available:",
+  "RuntimeUpToDate": "Xodus and WineGDK are up to date.",
+  "RuntimeCheckFailed": "Could not check updates for:"
 }

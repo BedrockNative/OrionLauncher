@@ -52,6 +52,9 @@
             <StackPanel Spacing="20">
               <TextBlock Text="Xodus + WineGDK" FontSize="20" FontWeight="SemiBold" />
               <TextBlock Text="{Binding Text[RuntimeText]}" Classes="muted" TextWrapping="Wrap" LineHeight="24" />
+              <CheckBox x:Name="RuntimeStartupCheckToggle" Content="{Binding Text[RuntimeCheckOnStartup]}" IsChecked="{Binding CheckRuntimeUpdatesOnStartup}" />
+              <TextBlock Text="{Binding Text[RuntimeCheckOnStartupHint]}" Classes="muted" TextWrapping="Wrap" />
+              <TextBlock Text="{Binding RuntimeUpdates.Status}" TextWrapping="Wrap" />
               <WrapPanel><Button Content="{Binding Text[UpdateRuntimes]}" Command="{Binding UpdateRuntimesCommand}" IsEnabled="{Binding IsIdle}" Margin="0,0,12,12" /><Button Content="{Binding Text[Logs]}" Command="{Binding OpenLogsCommand}" Margin="0,0,0,12" /></WrapPanel>
             </StackPanel>
           </Border>

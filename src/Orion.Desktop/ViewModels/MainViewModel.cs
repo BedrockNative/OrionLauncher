@@ -20,6 +20,8 @@ public partial class MainViewModel : ObservableObject
     private readonly IWindowDialogs dialogs;
     private readonly SettingsAutoSave settingsSave;
     private bool stopping;
+    private bool startupServicesEnabled;
+    private readonly CancellationTokenSource startupServices = new();
     private readonly Dictionary<Guid, CancellationTokenSource> games = [];
     private readonly HashSet<Task> activeTasks = [];
     private CancellationTokenSource? operation;
@@ -33,6 +35,7 @@ public partial class MainViewModel : ObservableObject
     public bool DownloadsEmpty => Downloads.Count == 0;
     public InstanceLogViewModel Log { get; }
     public ThemeSettingsViewModel Appearance { get; }
+    public RuntimeUpdatesViewModel RuntimeUpdates { get; }
     public ContentLibraryViewModel ContentLibrary { get; }
     public CurseForgeViewModel CurseForge { get; }
     public RtxViewModel Rtx { get; }
@@ -72,6 +75,7 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty] private GameVersion? selectedVersion;
     [ObservableProperty] private int languageIndex;
     [ObservableProperty] private bool keepInBackground;
+    [ObservableProperty] private bool checkRuntimeUpdatesOnStartup;
     [ObservableProperty] [NotifyPropertyChangedFor(nameof(ShowLaunchOptions))] private LaunchOptionsViewModel? launchEditor;
     public bool ShowLaunchOptions => LaunchEditor is not null;
     [ObservableProperty] private LaunchOptionsViewModel creationEditor;
@@ -83,6 +87,8 @@ public partial class MainViewModel : ObservableObject
         Log = new(Text);
         languageIndex = services.Settings.Language == "pt-BR" ? 1 : 0;
         keepInBackground = services.Settings.KeepInBackground;
+        checkRuntimeUpdatesOnStartup = services.Settings.CheckRuntimeUpdatesOnStartup;
+        RuntimeUpdates = new(Text, services.Runtimes.CheckForUpdatesAsync);
         fileManagerIndex = Math.Max(0, DesktopFolderLauncher.Options.ToList().FindIndex(o => o.Id == services.Settings.FileManager));
         Text.SetLanguage(services.Settings.Language);
         RefreshFileManagers();
@@ -117,6 +123,38 @@ public partial class MainViewModel : ObservableObject
         catch (System.Text.Json.JsonException) { AccountStatus = Text["AccountsUnknown"]; }
         await services.Downloads.StartAsync();
     });
+
+    public void StartXodusOnStartup()
+    {
+        if (startupServicesEnabled || stopping) return;
+        startupServicesEnabled = true;
+        WarmXodus();
+    }
+
+    private void WarmXodus()
+    {
+        if (!startupServicesEnabled || stopping) return;
+        var accounts = SavedAccounts.Select(a => (string?)a.Id).DefaultIfEmpty(null).ToArray();
+        var task = WarmAsync();
+        activeTasks.Add(task);
+        _ = ObserveAsync();
+        async Task ObserveAsync() { try { await task; } finally { activeTasks.Remove(task); } }
+        async Task WarmAsync()
+        {
+            try
+            {
+                var installed = await services.Runtimes.GetInstalledAsync(RuntimeDefinition.Xodus, startupServices.Token);
+                if (installed is not null) await services.XodusSessions.WarmAsync(installed, accounts, startupServices.Token);
+            }
+            catch (OperationCanceledException) { }
+            catch (Exception error)
+            {
+                // Keep the UI usable; Play retries and reports any persistent error.
+                Orion.Infrastructure.Processes.ProcessLog.Event(Path.Combine(services.Paths.Logs, "xodus-service.log"),
+                    "Xodus startup", $"Service preparation failed ({error.GetType().Name}); retrying on next launch.");
+            }
+        }
+    }
 
     [RelayCommand] private void Navigate(string value) => Page = value;
     partial void OnPageChanged(string value)
@@ -222,6 +260,7 @@ public partial class MainViewModel : ObservableObject
         UpdateAccountChoices();
         AccountStatus = accounts is null ? Text["AccountsUpdateRequired"] : accounts.FirstOrDefault(a => a.Active) is { } active
             ? $"{Text["ActiveAccount"]}: {active.Username}" : Text["NoAccounts"];
+        WarmXodus();
     }
 
     private XboxProfileViewModel NewProfile() => new(Text, services.Account.ReadCachedProfileAsync, services.Account.ReadProfileAsync, services.Avatars.LoadAsync);
@@ -239,6 +278,9 @@ public partial class MainViewModel : ObservableObject
     [RelayCommand] private Task UpdateRuntimesAsync() => WorkAsync(async ct =>
     {
         RequireNoGames();
+        await RuntimeUpdates.StopAsync();
+        RuntimeUpdates.Clear();
+        await services.XodusSessions.ResetAsync(ct);
         var xodus = await services.Runtimes.EnsureAsync(RuntimeDefinition.Xodus, Reporter(), ct, checkForUpdates: true);
         var wine = await services.Runtimes.EnsureAsync(RuntimeDefinition.WineGdk, Reporter(), ct, checkForUpdates: true);
         SetAccounts(await services.Account.ReadInstalledAsync(ct));
@@ -252,7 +294,8 @@ public partial class MainViewModel : ObservableObject
             return;
         var settings = new LauncherSettings(LanguageIndex == 1 ? "pt-BR" : "en-US", KeepInBackground,
             Appearance.SelectedMode.Id, Appearance.SelectedPalette.Id, Appearance.SelectedVisual.Id)
-            { Appearance = Appearance.Advanced.Snapshot(), FileManager = SelectedFileManager };
+            { Appearance = Appearance.Advanced.Snapshot(), FileManager = SelectedFileManager,
+                CheckRuntimeUpdatesOnStartup = CheckRuntimeUpdatesOnStartup };
         settingsSave.Queue(settings);
     }
     partial void OnLanguageIndexChanged(int value)
@@ -260,6 +303,7 @@ public partial class MainViewModel : ObservableObject
         Text.SetLanguage(value == 1 ? "pt-BR" : "en-US");
         RefreshFileManagers();
         Appearance.RefreshLabels();
+        RuntimeUpdates.RefreshLabels();
         ContentLibrary.RefreshLabels();
         CurseForge.RefreshLabels();
         Rtx.RefreshLabels();
@@ -268,6 +312,11 @@ public partial class MainViewModel : ObservableObject
         QueueSettings();
     }
     partial void OnKeepInBackgroundChanged(bool value) => QueueSettings();
+    partial void OnCheckRuntimeUpdatesOnStartupChanged(bool value)
+    {
+        if (!value) RuntimeUpdates.Cancel();
+        QueueSettings();
+    }
     partial void OnFileManagerIndexChanged(int value) => QueueSettings();
     [RelayCommand] private void RefreshFileManagers()
     {
@@ -374,6 +423,8 @@ public partial class MainViewModel : ObservableObject
     {
         QueueSettings();
         stopping = true;
+        startupServices.Cancel();
+        await RuntimeUpdates.StopAsync();
         await settingsSave.FlushAsync();
         await ContentLibrary.StopAsync();
         await CurseForge.StopAsync();

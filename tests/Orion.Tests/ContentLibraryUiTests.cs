@@ -153,10 +153,13 @@ public sealed class ContentLibraryUiTests
             var window = new MainWindow(); var model = new MainViewModel(services, window); window.DataContext = model;
             window.Show(); model.Page = "settings"; Dispatcher.UIThread.RunJobs();
             Assert.DoesNotContain(window.GetVisualDescendants().OfType<Button>(), b => b.IsEffectivelyVisible && Equals(b.Content, model.Text["Save"]));
+            Assert.True(model.CheckRuntimeUpdatesOnStartup);
+            model.CheckRuntimeUpdatesOnStartup = false;
             model.LanguageIndex = 1; model.KeepInBackground = false;
             model.Appearance.VisualIndex = 3; model.Appearance.Advanced.Dark.AccentIndex = 1; model.Appearance.Advanced.Dark.CustomAccent = "#123456";
             for (var i = 0; i < 100 && services.Settings.Appearance.Dark.CustomAccent != "#123456"; i++) await Task.Delay(10);
             var saved = await services.SettingsStore.LoadAsync(); Assert.Equal("pt-BR", saved.Language); Assert.False(saved.KeepInBackground);
+            Assert.False(saved.CheckRuntimeUpdatesOnStartup);
             Assert.Equal("dune", saved.VisualTheme); Assert.Equal("#123456", saved.Appearance.Dark.CustomAccent);
             model.Appearance.Advanced.Dark.CustomAccent = "#bad";
             await Task.Delay(350); Assert.Equal("#123456", (await services.SettingsStore.LoadAsync()).Appearance.Dark.CustomAccent);

@@ -18,7 +18,7 @@ public sealed class MangoHudUiTests
         await session.Dispatch<bool>(() =>
         {
             var text = new Localizer(); text.SetLanguage("pt-BR");
-            var model = new LaunchOptionsViewModel(GameInstance.Create("MangoHud", "26.30", "Release"), text)
+            var model = new LaunchOptionsViewModel(GameInstance.Create("MangoHud", "26.30", "Release"), text, hasMangoHudSystemConfiguration: () => true)
             { SelectedTab = 7 };
             var fields = new LaunchOptionsFields { DataContext = model };
             var window = new Window { Width = 960, Height = 800, Content = fields };
@@ -31,11 +31,27 @@ public sealed class MangoHudUiTests
                 var position = fields.FindControl<ComboBox>("MangoHudPositionPicker")!;
                 Assert.True(enabled.IsEffectivelyVisible);
                 Assert.True(fps.IsChecked);
+                var system = fields.FindControl<CheckBox>("MangoHudSystemConfigToggle")!;
+                Assert.True(system.IsChecked);
+                Assert.False(fps.IsEffectivelyEnabled);
+                Assert.False(position.IsEffectivelyEnabled);
+                system.IsChecked = false;
+                Dispatcher.UIThread.RunJobs();
+                Assert.True(fps.IsEffectivelyEnabled);
+                Assert.True(position.IsEffectivelyEnabled);
                 fps.IsChecked = false;
                 position.SelectedIndex = 3;
                 Dispatcher.UIThread.RunJobs();
                 Assert.False(model.Build().MangoHud!.Fps);
                 Assert.Equal(MangoHudPosition.BottomRight, model.Build().MangoHud!.Position);
+                system.IsChecked = true;
+                Dispatcher.UIThread.RunJobs();
+                Assert.False(fps.IsEffectivelyEnabled);
+                Assert.False(position.IsEffectivelyEnabled);
+                Assert.False(model.Build().MangoHud!.Fps);
+                Assert.Equal(MangoHudPosition.BottomRight, model.Build().MangoHud!.Position);
+                system.IsChecked = false;
+                Dispatcher.UIThread.RunJobs();
                 position.IsDropDownOpen = true;
                 Dispatcher.UIThread.RunJobs();
                 Assert.True(position.IsDropDownOpen);

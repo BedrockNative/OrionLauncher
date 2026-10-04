@@ -175,6 +175,12 @@
             </StackPanel>
           </Border>
           <Border Classes="panel" Padding="16" IsEnabled="{Binding MangoHudEnabled}">
+            <StackPanel Spacing="8">
+              <CheckBox x:Name="MangoHudSystemConfigToggle" Content="{Binding Text[MangoHudSystemConfig]}" IsChecked="{Binding MangoHudUseSystemConfig}" />
+              <TextBlock Text="{Binding Text[MangoHudSystemConfigHint]}" Classes="muted" TextWrapping="Wrap" FontSize="12" />
+            </StackPanel>
+          </Border>
+          <Border x:Name="MangoHudMetricsPanel" Classes="panel" Padding="16" IsEnabled="{Binding CanEditMangoHudMetrics}">
             <StackPanel Spacing="10">
               <TextBlock Text="{Binding Text[MangoHudMetrics]}" FontWeight="SemiBold" />
               <WrapPanel ItemWidth="240">
