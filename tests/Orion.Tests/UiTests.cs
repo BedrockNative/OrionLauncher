@@ -392,7 +392,7 @@ public sealed class UiTests
             }
             Screenshot(window, "orion-about.png");
             Screenshot(dialog, "orion-changelog-current.png");
-            notes.SelectedEntry = notes.Entries[1];
+            notes.SelectedEntry = notes.Entries.First(entry => entry.IsLegacy);
             Assert.True(notes.SelectedEntry.IsLegacy);
             Assert.NotEmpty(notes.Blocks);
             Screenshot(dialog, "orion-changelog-legacy.png");
