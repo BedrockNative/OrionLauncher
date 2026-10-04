@@ -1,0 +1,7 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup><ProjectReference Include="../Orion.Application/Orion.Application.csproj" /></ItemGroup>
+  <ItemGroup><SupportedPlatform Include="linux" /></ItemGroup>
+  <ItemGroup Condition="Exists('obj/curseforge.key')">
+    <EmbeddedResource Include="obj/curseforge.key" LogicalName="Orion.CurseForge.Credential" />
+  </ItemGroup>
+</Project>
