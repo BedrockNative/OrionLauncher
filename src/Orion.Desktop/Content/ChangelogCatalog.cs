@@ -26,8 +26,11 @@ public static partial class ChangelogCatalog
         var resources = assembly.GetManifestResourceNames().ToHashSet(StringComparer.Ordinal);
         List<ChangelogEntry> entries = [];
         const string releasePrefix = "Changelog.release/en_US/v";
+        var runningVersion = assembly.GetName().Version ?? new Version(1, 0, 0);
         var releaseLocale = language == "pt-BR" ? "pt_BR" : "en_US";
         foreach (var resource in resources.Where(n => n.StartsWith(releasePrefix, StringComparison.Ordinal))
+            // Future draft notes are tracked during development, not shown as released.
+            .Where(n => Version.TryParse(n[releasePrefix.Length..^3], out var version) && version <= runningVersion)
             .OrderByDescending(n => Version.Parse(n[releasePrefix.Length..^3])))
         {
             var version = resource[releasePrefix.Length..^3];
