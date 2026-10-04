@@ -1,0 +1,3 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup><ProjectReference Include="../Orion.Domain/Orion.Domain.csproj" /></ItemGroup>
+</Project>
