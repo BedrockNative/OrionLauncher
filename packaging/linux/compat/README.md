@@ -84,6 +84,10 @@ Wayland/compositor e AppImage montado via FUSE requerem testes complementares.
 
 ## Execução registrada
 
+Consulte [a validação local da 1.0.1](RESULTS-1.0.1-2026-10-04.md): os dois
+formatos passaram em bases novas de Arch, Debian 13.7 e Fedora 44. O harness
+agora exige janela visível e pixels renderizados, além de processo ativo.
+
 Consulte [a validação local da 1.0.0](RESULTS-1.0.0-2026-10-04.md): os mesmos
 pacotes passaram em Arch, Debian 13 e Fedora 44, após corrigir a ABI Wayland,
 recompilar a camada Reflex na base suportada e completar a base gráfica Fedora.
