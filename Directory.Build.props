@@ -1,0 +1,13 @@
+<Project>
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <AnalysisLevel>latest</AnalysisLevel>
+    <Version Condition="'$(Version)' == ''">$([System.IO.File]::ReadAllText('$(MSBuildThisFileDirectory)RELEASE_VERSION').Trim())</Version>
+    <Authors>yPerfectBR;raonygamer</Authors>
+    <RepositoryUrl>https://github.com/BedrockNative/OrionLauncher</RepositoryUrl>
+    <NuGetAudit>true</NuGetAudit>
+  </PropertyGroup>
+</Project>

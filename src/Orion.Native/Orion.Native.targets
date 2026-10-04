@@ -1,0 +1,14 @@
+<Project>
+  <PropertyGroup>
+    <OrionNativeSource>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)'))</OrionNativeSource>
+    <OrionNativeBuild>$(OrionNativeSource)obj/$(Configuration)/windows-x64</OrionNativeBuild>
+    <OrionNativeDll>$(OrionNativeBuild)/out/Orion.Native.dll</OrionNativeDll>
+  </PropertyGroup>
+  <Target Name="BuildOrionNative" BeforeTargets="PrepareForBuild" Condition="'$(DesignTimeBuild)' != 'true'">
+    <Exec Command="cmake -S &quot;$(OrionNativeSource)&quot; -B &quot;$(OrionNativeBuild)&quot; -DCMAKE_TOOLCHAIN_FILE=&quot;$(OrionNativeSource)cmake/mingw-w64.cmake&quot; -DCMAKE_BUILD_TYPE=$(Configuration)" />
+    <Exec Command="cmake --build &quot;$(OrionNativeBuild)&quot; --config $(Configuration) --parallel 2" />
+  </Target>
+  <ItemGroup>
+    <Content Include="$(OrionNativeDll)" Link="Orion.Native.dll" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,11 @@
+<UserControl xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Orion.Desktop.ViewModels" x:Class="Orion.Desktop.Views.ProfileAvatar"
+             x:DataType="vm:XboxProfileViewModel" Width="38" Height="38">
+  <Border CornerRadius="32" ClipToBounds="True" Background="{DynamicResource OrionAccentSurfaceBrush}">
+    <Grid>
+      <TextBlock Text="{Binding Initial, FallbackValue='?'}" IsVisible="{Binding !HasAvatar, FallbackValue=True}"
+                 FontSize="18" FontWeight="SemiBold" Foreground="{DynamicResource OrionAccentBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+      <Image Source="{Binding Avatar}" IsVisible="{Binding HasAvatar, FallbackValue=False}" Stretch="UniformToFill" />
+    </Grid>
+  </Border>
+</UserControl>

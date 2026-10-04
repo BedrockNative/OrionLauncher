@@ -1,0 +1,53 @@
+<UserControl xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Orion.Desktop.ViewModels" xmlns:views="using:Orion.Desktop.Views"
+             x:Class="Orion.Desktop.Views.SettingsPanel" x:DataType="vm:MainViewModel">
+  <Grid RowDefinitions="Auto,*,Auto" MaxWidth="1120">
+    <StackPanel Spacing="8" Margin="0,0,0,24">
+      <TextBlock Text="{Binding Text[SettingsTitle]}" Classes="heading" />
+      <TextBlock Text="{Binding Text[SettingsSubtitle]}" Classes="muted" TextWrapping="Wrap" />
+    </StackPanel>
+    <TabControl x:Name="LauncherSettingsTabs" Grid.Row="1" Classes="sectionTabs">
+      <TabItem Header="{Binding Text[GeneralTab]}">
+        <ScrollViewer HorizontalScrollBarVisibility="Disabled">
+          <StackPanel Spacing="16">
+          <Border x:Name="GeneralSettingsCard" Classes="panel" Margin="0,20,8,0" VerticalAlignment="Top">
+            <StackPanel Spacing="22">
+              <StackPanel Spacing="6">
+                <TextBlock Text="{Binding Text[GeneralTab]}" FontSize="20" FontWeight="SemiBold" />
+                <TextBlock Text="{Binding Text[GeneralSettingsHint]}" Classes="muted" FontSize="12" TextWrapping="Wrap" />
+              </StackPanel>
+              <Border Height="1" Background="{DynamicResource OrionBorderBrush}" />
+              <StackPanel Spacing="10">
+              <TextBlock Text="{Binding Text[Language]}" FontWeight="SemiBold" />
+              <ComboBox ItemsSource="{Binding Languages}" SelectedIndex="{Binding LanguageIndex}" MinWidth="250" AutomationProperties.Name="{Binding Text[Language]}" />
+              </StackPanel>
+              <CheckBox Content="{Binding Text[Background]}" IsChecked="{Binding KeepInBackground}" />
+            </StackPanel>
+          </Border>
+          <Border Classes="panel" Margin="0,0,8,0" VerticalAlignment="Top"><StackPanel Spacing="14">
+              <TextBlock Text="{Binding Text[Logs]}" FontWeight="SemiBold" />
+              <TextBlock Text="{Binding Text[ClearAllLogsConfirm]}" Classes="muted" TextWrapping="Wrap" />
+              <WrapPanel><Button Content="{Binding Text[Logs]}" Command="{Binding OpenLogsCommand}" Margin="0,0,12,8" /><Button Content="{Binding Text[ClearAllLogs]}" Command="{Binding ClearLogsCommand}" Margin="0,0,0,8" /></WrapPanel>
+            </StackPanel>
+          </Border>
+          </StackPanel>
+        </ScrollViewer>
+      </TabItem>
+      <TabItem Header="{Binding Text[ThemeSettings]}">
+        <views:ThemeSettingsPanel DataContext="{Binding Appearance}" />
+      </TabItem>
+      <TabItem Header="{Binding Text[RuntimeTab]}">
+        <ScrollViewer HorizontalScrollBarVisibility="Disabled">
+          <Border Classes="panel" Margin="0,20,8,0" VerticalAlignment="Top">
+            <StackPanel Spacing="20">
+              <TextBlock Text="Xodus + WineGDK" FontSize="20" FontWeight="SemiBold" />
+              <TextBlock Text="{Binding Text[RuntimeText]}" Classes="muted" TextWrapping="Wrap" LineHeight="24" />
+              <WrapPanel><Button Content="{Binding Text[UpdateRuntimes]}" Command="{Binding UpdateRuntimesCommand}" IsEnabled="{Binding IsIdle}" Margin="0,0,12,12" /><Button Content="{Binding Text[Logs]}" Command="{Binding OpenLogsCommand}" Margin="0,0,0,12" /></WrapPanel>
+            </StackPanel>
+          </Border>
+        </ScrollViewer>
+      </TabItem>
+    </TabControl>
+    <TextBlock Grid.Row="2" Text="{Binding Text[SettingsAutoSave]}" Classes="muted" FontSize="11" Margin="0,14,0,0" />
+  </Grid>
+</UserControl>

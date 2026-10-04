@@ -1,0 +1,104 @@
+<UserControl xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Orion.Desktop.ViewModels" xmlns:views="using:Orion.Desktop.Views" x:Class="Orion.Desktop.Views.ThemeSettingsPanel" x:DataType="vm:ThemeSettingsViewModel">
+  <UserControl.Styles>
+    <Style Selector="ListBoxItem" x:DataType="vm:ThemeOptionViewModel">
+      <Setter Property="AutomationProperties.Name" Value="{Binding Label}" />
+      <Setter Property="Padding" Value="4" />
+      <Setter Property="Margin" Value="0,0,6,6" />
+      <Setter Property="CornerRadius" Value="10" />
+    </Style>
+    <Style Selector="ComboBoxItem" x:DataType="vm:ThemeOptionViewModel"><Setter Property="AutomationProperties.Name" Value="{Binding Label}" /></Style>
+    <Style Selector="ListBoxItem /template/ ContentPresenter#PART_ContentPresenter"><Setter Property="CornerRadius" Value="8" /></Style>
+    <Style Selector="ListBoxItem:selected /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="{DynamicResource OrionSelectionBrush}" />
+      <Setter Property="Foreground" Value="{DynamicResource OrionAccentBrush}" />
+    </Style>
+    <Style Selector="ListBoxItem:selected:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="{DynamicResource OrionSelectionBrush}" />
+      <Setter Property="Foreground" Value="{DynamicResource OrionAccentBrush}" />
+    </Style>
+  </UserControl.Styles>
+  <ScrollViewer x:Name="ThemeSettingsScroll" HorizontalScrollBarVisibility="Disabled">
+    <StackPanel Spacing="22" Margin="0,20,8,0">
+      <TextBlock Text="{Binding Text[ThemeHint]}" Classes="muted" TextWrapping="Wrap" />
+      <Border Classes="panel">
+        <StackPanel Spacing="12">
+          <TextBlock Text="{Binding Text[ThemeMode]}" FontSize="18" FontWeight="SemiBold" />
+          <ComboBox x:Name="ThemeModePicker" ItemsSource="{Binding Modes}" SelectedIndex="{Binding ModeIndex}" MinWidth="240" AutomationProperties.Name="{Binding Text[ThemeMode]}">
+            <ComboBox.ItemTemplate><DataTemplate x:DataType="vm:ThemeOptionViewModel"><TextBlock Text="{Binding Label}" /></DataTemplate></ComboBox.ItemTemplate>
+          </ComboBox>
+          <TextBlock Text="{Binding Text[ThemeSystemHint]}" Classes="muted" FontSize="12" TextWrapping="Wrap" />
+          <StackPanel IsVisible="{Binding IsSchedule}" Spacing="8">
+            <TextBlock Text="{Binding Text[DarkHours]}" />
+            <WrapPanel><TimePicker SelectedTime="{Binding Advanced.DarkStart}" ClockIdentifier="24HourClock" /><TextBlock Text=" — " VerticalAlignment="Center" /><TimePicker SelectedTime="{Binding Advanced.DarkEnd}" ClockIdentifier="24HourClock" /></WrapPanel>
+          </StackPanel>
+          <StackPanel IsVisible="{Binding IsSolar}" Spacing="8">
+            <TextBlock Text="{Binding Text[SolarHint]}" Classes="muted" TextWrapping="Wrap" />
+            <WrapPanel>
+              <StackPanel Margin="0,0,12,0"><TextBlock Text="{Binding Text[Latitude]}" /><NumericUpDown Value="{Binding Advanced.Latitude}" Minimum="-90" Maximum="90" Increment="0.1" Width="180" /></StackPanel>
+              <StackPanel><TextBlock Text="{Binding Text[Longitude]}" /><NumericUpDown Value="{Binding Advanced.Longitude}" Minimum="-180" Maximum="180" Increment="0.1" Width="180" /></StackPanel>
+            </WrapPanel>
+          </StackPanel>
+        </StackPanel>
+      </Border>
+      <Border Classes="panel">
+        <StackPanel Spacing="14">
+          <TextBlock Text="{Binding Text[VisualTheme]}" FontSize="18" FontWeight="SemiBold" />
+          <TextBlock Text="{Binding Text[VisualThemeHint]}" Classes="muted" FontSize="12" TextWrapping="Wrap" />
+          <ListBox x:Name="VisualThemePicker" ItemsSource="{Binding Visuals}" SelectedIndex="{Binding VisualIndex}" Background="Transparent" AutomationProperties.Name="{Binding Text[VisualTheme]}">
+            <ListBox.ItemsPanel><ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate></ListBox.ItemsPanel>
+            <ListBox.ItemTemplate>
+              <DataTemplate x:DataType="vm:VisualThemeOptionViewModel">
+                <StackPanel Width="176" Spacing="10" Margin="6">
+                  <Border CornerRadius="9" ClipToBounds="True" BorderBrush="{DynamicResource OrionBorderBrush}" BorderThickness="1">
+                    <Grid ColumnDefinitions="*,*" Height="76">
+                      <Grid Background="{Binding Theme.Dark.Window}" ColumnDefinitions="16,*">
+                        <Border Background="{Binding Theme.Dark.Sidebar}" />
+                        <StackPanel Grid.Column="1" Spacing="5" Margin="7,12">
+                          <Border Height="4" Width="26" HorizontalAlignment="Left" CornerRadius="2" Background="{Binding Theme.Dark.Muted}" />
+                          <Border Height="33" CornerRadius="4" Background="{Binding Theme.Dark.Panel}" BorderBrush="{Binding Theme.Dark.Border}" BorderThickness="1" />
+                        </StackPanel>
+                      </Grid>
+                      <Grid Grid.Column="1" Background="{Binding Theme.Light.Window}" ColumnDefinitions="16,*">
+                        <Border Background="{Binding Theme.Light.Sidebar}" />
+                        <StackPanel Grid.Column="1" Spacing="5" Margin="7,12">
+                          <Border Height="4" Width="26" HorizontalAlignment="Left" CornerRadius="2" Background="{Binding Theme.Light.Muted}" />
+                          <Border Height="33" CornerRadius="4" Background="{Binding Theme.Light.Panel}" BorderBrush="{Binding Theme.Light.Border}" BorderThickness="1" />
+                        </StackPanel>
+                      </Grid>
+                    </Grid>
+                  </Border>
+                  <Grid ColumnDefinitions="*,Auto">
+                    <TextBlock Text="{Binding Label}" FontWeight="SemiBold" />
+                    <TextBlock Grid.Column="1" Text="✓" IsVisible="{Binding $parent[ListBoxItem].IsSelected}" Foreground="{DynamicResource OrionAccentBrush}" />
+                  </Grid>
+                  <TextBlock Text="{Binding Description}" Classes="muted" FontSize="11" TextWrapping="Wrap" MinHeight="30" />
+                </StackPanel>
+              </DataTemplate>
+            </ListBox.ItemTemplate>
+          </ListBox>
+        </StackPanel>
+      </Border>
+      <Border Classes="panel">
+        <StackPanel Spacing="14">
+          <TextBlock Text="{Binding Text[ThemePalette]}" FontSize="18" FontWeight="SemiBold" />
+          <ListBox x:Name="ThemePalettePicker" ItemsSource="{Binding Palettes}" SelectedIndex="{Binding PaletteIndex}" Background="Transparent" AutomationProperties.Name="{Binding Text[ThemePalette]}">
+            <ListBox.ItemsPanel><ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate></ListBox.ItemsPanel>
+            <ListBox.ItemTemplate>
+              <DataTemplate x:DataType="vm:ThemeOptionViewModel">
+                <StackPanel Orientation="Horizontal" Spacing="10" Margin="8,10"><Grid Width="16" Height="16"><Ellipse Fill="{DynamicResource OrionAccentBrush}" /><Ellipse Fill="{Binding Swatch}" /></Grid><TextBlock Text="{Binding Label}" /></StackPanel>
+              </DataTemplate>
+            </ListBox.ItemTemplate>
+          </ListBox>
+          <TextBlock Text="{Binding Text[ThemePaletteHint]}" Classes="muted" FontSize="12" TextWrapping="Wrap" />
+        </StackPanel>
+      </Border>
+      <views:AdvancedAppearancePanel DataContext="{Binding Advanced}" />
+      <StackPanel Spacing="8">
+        <WrapPanel>
+          <Button Content="{Binding Text[ResetTheme]}" Command="{Binding ResetCommand}" Classes="subtle" />
+        </WrapPanel>
+      </StackPanel>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

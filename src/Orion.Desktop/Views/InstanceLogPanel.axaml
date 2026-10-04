@@ -1,0 +1,55 @@
+<UserControl xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Orion.Desktop.ViewModels" x:Class="Orion.Desktop.Views.InstanceLogPanel" x:DataType="vm:InstanceLogViewModel">
+  <UserControl.Styles>
+    <Style Selector="Button.logAction, ToggleButton.logAction">
+      <Setter Property="Height" Value="32" /><Setter Property="MinHeight" Value="32" />
+      <Setter Property="Padding" Value="10,0" /><Setter Property="CornerRadius" Value="8" />
+      <Setter Property="Background" Value="Transparent" /><Setter Property="BorderBrush" Value="{DynamicResource OrionBorderBrush}" />
+      <Setter Property="BorderThickness" Value="1" /><Setter Property="Foreground" Value="{DynamicResource OrionMutedBrush}" />
+      <Setter Property="FontSize" Value="12" /><Setter Property="VerticalContentAlignment" Value="Center" />
+    </Style>
+    <Style Selector="ToggleButton.logAction:checked"><Setter Property="Foreground" Value="{DynamicResource OrionAccentBrush}" /></Style>
+    <Style Selector="ToggleButton.logAction:checked /template/ ContentPresenter">
+      <Setter Property="Background" Value="{DynamicResource OrionSelectionBrush}" /><Setter Property="Foreground" Value="{DynamicResource OrionAccentBrush}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource OrionAccentBorderBrush}" />
+    </Style>
+    <Style Selector="Button.logAction:pointerover /template/ ContentPresenter, ToggleButton.logAction:pointerover /template/ ContentPresenter">
+      <Setter Property="Background" Value="{DynamicResource OrionHoverBrush}" /><Setter Property="Foreground" Value="{DynamicResource OrionTextBrush}" />
+    </Style>
+    <Style Selector="Path.logIcon"><Setter Property="Width" Value="14" /><Setter Property="Height" Value="14" /><Setter Property="Stretch" Value="Uniform" /><Setter Property="Stroke" Value="{Binding $parent[Button].Foreground}" /><Setter Property="StrokeThickness" Value="1.6" /><Setter Property="VerticalAlignment" Value="Center" /></Style>
+  </UserControl.Styles>
+  <Border Background="{DynamicResource OrionInsetBrush}" BorderBrush="{DynamicResource OrionBorderBrush}" BorderThickness="1" CornerRadius="12" Margin="24,0,24,16" Padding="16,12">
+    <Grid RowDefinitions="Auto,*,Auto">
+      <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12" Margin="0,0,0,12">
+        <Grid ColumnDefinitions="24,*" ColumnSpacing="8" VerticalAlignment="Center">
+          <TextBlock Text="›_" Foreground="{DynamicResource OrionAccentBrush}" FontSize="20" FontWeight="Bold" />
+          <TextBlock Grid.Column="1" Text="{Binding Name}" FontWeight="SemiBold" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+        </Grid>
+        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6">
+          <Button Click="ClearLog" Classes="logAction" Width="34" ToolTip.Tip="{Binding Text[ClearLog]}" AutomationProperties.Name="{Binding Text[ClearLog]}">
+            <Path Classes="logIcon" Data="M2,4 L16,4 M6,4 L6,1 L12,1 L12,4 M4,4 L5,18 L13,18 L14,4 M8,7 L8,15 M11,7 L11,15" />
+          </Button>
+          <Button Click="CopyLog" Classes="logAction" ToolTip.Tip="{Binding Text[CopyLogHint]}" AutomationProperties.Name="{Binding Text[CopyLog]}">
+            <StackPanel Orientation="Horizontal" Spacing="7"><Path Classes="logIcon" Data="M5,5 L16,5 L16,18 L5,18 Z M12,2 L2,2 L2,14" /><TextBlock Text="{Binding Text[CopyLog]}" FontSize="12" VerticalAlignment="Center" /></StackPanel>
+          </Button>
+          <Button Click="DetachLog" IsVisible="{Binding !IsDetached}" Classes="logAction" Width="34" ToolTip.Tip="{Binding Text[DetachLog]}" AutomationProperties.Name="{Binding Text[DetachLog]}">
+            <Path Classes="logIcon" Data="M10,2 L18,2 L18,10 M18,2 L8,12 M7,4 L2,4 L2,18 L16,18 L16,13" />
+          </Button>
+          <ToggleButton Classes="logAction" IsChecked="{Binding Follow}" ToolTip.Tip="{Binding Text[FollowLog]}" AutomationProperties.Name="{Binding Text[FollowLog]}">
+            <StackPanel Orientation="Horizontal" Spacing="7"><Path Width="14" Height="14" Stretch="Uniform" Stroke="{Binding $parent[ToggleButton].Foreground}" StrokeThickness="1.6" Data="M2,3 L14,3 M2,7 L10,7 M8,10 L8,18 M4,14 L8,18 L12,14" /><TextBlock Text="{Binding Text[FollowLog]}" FontSize="12" VerticalAlignment="Center" /></StackPanel>
+          </ToggleButton>
+          <Button Command="{Binding CloseCommand}" Classes="logAction" Width="32" ToolTip.Tip="{Binding Text[Close]}" AutomationProperties.Name="{Binding Text[Close]}"><Path Classes="logIcon" Data="M3,3 L13,13 M13,3 L3,13" /></Button>
+        </StackPanel>
+      </Grid>
+      <TextBox x:Name="Output" Grid.Row="1" Text="{Binding Content, Mode=OneWay}" IsReadOnly="True" AcceptsReturn="True"
+               FontFamily="monospace" FontSize="12" Foreground="{DynamicResource OrionConsoleTextBrush}" Background="{DynamicResource OrionConsoleBrush}" BorderThickness="0"
+               TextWrapping="NoWrap" ScrollViewer.VerticalScrollBarVisibility="Auto" ScrollViewer.HorizontalScrollBarVisibility="Auto"
+               Watermark="{Binding Text[LogWaiting]}" />
+      <Grid Grid.Row="2" Margin="0,8,0,0" ColumnDefinitions="*,Auto">
+        <TextBlock Text="{Binding Text[LogHint]}" Classes="muted" FontSize="11" TextWrapping="Wrap" />
+        <TextBlock Text="{Binding Error}" Foreground="{DynamicResource OrionErrorTextBrush}" FontSize="11" Background="{DynamicResource OrionInsetBrush}" IsVisible="{Binding HasError}" />
+        <TextBlock Grid.Column="1" Text="{Binding CopyStatus}" Foreground="{DynamicResource OrionAccentBrush}" FontSize="11" Margin="8,0,0,0" />
+      </Grid>
+    </Grid>
+  </Border>
+</UserControl>

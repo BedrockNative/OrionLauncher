@@ -1,0 +1,247 @@
+<UserControl xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:vm="using:Orion.Desktop.ViewModels" xmlns:d="using:Orion.Domain" xmlns:views="using:Orion.Desktop.Views"
+    xmlns:rtx="using:Orion.Infrastructure.Rtx"
+    x:Class="Orion.Desktop.Views.RtxPanel" x:DataType="vm:RtxViewModel">
+  <UserControl.Styles>
+    <Style Selector="Button.subtle.active"><Setter Property="Background" Value="{DynamicResource OrionSelectionBrush}" /><Setter Property="Foreground" Value="{DynamicResource OrionAccentBrush}" /></Style>
+    <Style Selector="Button.subtle.active:pointerover /template/ ContentPresenter"><Setter Property="Background" Value="{DynamicResource OrionSelectionBrush}" /><Setter Property="Foreground" Value="{DynamicResource OrionAccentBrush}" /></Style>
+    <Style Selector="ListBoxItem"><Setter Property="Padding" Value="12" /><Setter Property="Margin" Value="4" /></Style>
+    <Style Selector="ListBoxItem /template/ ContentPresenter"><Setter Property="CornerRadius" Value="14" /></Style>
+    <Style Selector="ListBoxItem:selected /template/ ContentPresenter, ListBoxItem:selected:pointerover /template/ ContentPresenter">
+      <Setter Property="Background" Value="{DynamicResource OrionSelectionBrush}" /><Setter Property="Foreground" Value="{DynamicResource OrionTextBrush}" />
+    </Style>
+  </UserControl.Styles>
+  <Grid RowDefinitions="Auto,*,Auto" RowSpacing="16">
+    <StackPanel Spacing="14">
+      <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16">
+        <StackPanel Spacing="6"><TextBlock Text="RTX Studio" Classes="heading" /><TextBlock Text="{Binding Text[RtxIntro]}" Classes="muted" TextWrapping="Wrap" /></StackPanel>
+        <Button Grid.Column="1" Content="{Binding Text[RtxCreator]}" Command="{Binding OpenCreatorCommand}" IsVisible="{Binding IsBetter}" Classes="subtle" VerticalAlignment="Center" IsEnabled="{Binding IsIdle}" />
+      </Grid>
+      <Border Classes="panel" Padding="14">
+        <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="14" IsEnabled="{Binding IsIdle}">
+          <TextBlock Text="{Binding Text[RtxInstance]}" VerticalAlignment="Center" FontWeight="SemiBold" />
+          <ComboBox Grid.Column="1" ItemsSource="{Binding Instances}" SelectedItem="{Binding Instance}" HorizontalAlignment="Stretch" MaxWidth="460" HorizontalContentAlignment="Stretch" AutomationProperties.Name="{Binding Text[RtxInstance]}">
+            <ComboBox.ItemTemplate><DataTemplate x:DataType="d:GameInstance"><Grid ColumnDefinitions="*,Auto" ColumnSpacing="12"><TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis" /><TextBlock Grid.Column="1" Text="{Binding Version}" Classes="muted" /></Grid></DataTemplate></ComboBox.ItemTemplate>
+          </ComboBox>
+          <StackPanel Grid.Column="2" VerticalAlignment="Center" MaxWidth="240"><TextBlock Text="{Binding FamilyTitle}" FontSize="10" Classes="muted" /><TextBlock Text="{Binding InstalledLabel}" TextTrimming="CharacterEllipsis" FontWeight="SemiBold" /></StackPanel>
+        </Grid>
+      </Border>
+      <Border Background="{DynamicResource OrionWarningSurfaceBrush}" CornerRadius="10" Padding="12">
+        <StackPanel Spacing="6">
+          <TextBlock Text="{Binding Text[RtxExperimentalTitle]}" FontWeight="SemiBold" Foreground="{DynamicResource OrionWarningTextBrush}" />
+          <TextBlock Text="{Binding Text[RtxExperimentalNotice]}" TextWrapping="Wrap" FontSize="12" Foreground="{DynamicResource OrionWarningTextBrush}" />
+          <Button Content="{Binding Text[RtxReportIssue]}" Command="{Binding ReportIssueCommand}" Classes="subtle" />
+        </StackPanel>
+      </Border>
+      <WrapPanel IsEnabled="{Binding IsIdle}">
+        <Button Content="BetterRTX" Command="{Binding BrowseCommand}" Classes="subtle" Classes.active="{Binding IsBetter}" Margin="0,0,10,0" />
+        <Button Content="Vanilla RTX" Command="{Binding BrowseTexturesCommand}" Classes="subtle" Classes.active="{Binding IsVanilla}" Margin="0,0,10,0" />
+      </WrapPanel>
+      <TextBlock Text="{Binding Text[RtxFamiliesHint]}" Classes="muted" FontSize="12" TextWrapping="Wrap" />
+      <Border Background="{DynamicResource OrionWarningSurfaceBrush}" CornerRadius="10" Padding="12" IsVisible="{Binding HasFamilyConflict}">
+        <TextBlock Text="{Binding Text[RtxFamilyConflict]}" Foreground="{DynamicResource OrionWarningTextBrush}" TextWrapping="Wrap" />
+      </Border>
+      <Expander Header="{Binding Text[RtxCompatibilityNotice]}" IsVisible="{Binding IsBetter}" HorizontalAlignment="Stretch">
+        <Border Background="{DynamicResource OrionWarningSurfaceBrush}" CornerRadius="10" Padding="14">
+          <TextBlock Text="{Binding Text[RtxBetterNotice]}" Foreground="{DynamicResource OrionWarningTextBrush}" TextWrapping="Wrap" />
+        </Border>
+      </Expander>
+      <TextBlock Text="{Binding Text[RtxVanillaHint]}" IsVisible="{Binding IsVanilla}" Classes="muted" FontSize="12" TextWrapping="Wrap" />
+      <WrapPanel IsEnabled="{Binding IsIdle}">
+        <Button Content="{Binding Text[RtxBrowse]}" Command="{Binding BrowseCommand}" IsVisible="{Binding IsBetter}" Classes="subtle" Classes.active="{Binding IsBrowse}" Margin="0,0,10,0" />
+        <Button Content="{Binding Text[RtxTextures]}" Command="{Binding BrowseTexturesCommand}" IsVisible="{Binding IsVanilla}" Classes="subtle" Classes.active="{Binding IsTextures}" Margin="0,0,10,0" />
+        <Button Content="{Binding Text[RtxCreator]}" Command="{Binding OpenCreatorCommand}" IsVisible="{Binding IsBetter}" Classes="subtle" Classes.active="{Binding IsCreator}" Margin="0,0,10,0" />
+        <Button Content="{Binding Text[RtxConfiguration]}" Command="{Binding ConfigureCommand}" Classes="subtle" Classes.active="{Binding IsConfiguration}" />
+      </WrapPanel>
+    </StackPanel>
+    <Grid Grid.Row="1" IsEnabled="{Binding IsIdle}">
+      <Grid IsVisible="{Binding IsBrowse}" RowDefinitions="Auto,Auto,*" RowSpacing="12">
+        <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="10">
+          <TextBox Text="{Binding Query}" Watermark="{Binding Text[RtxSearch]}" />
+          <Button Grid.Column="1" Content="{Binding Text[RtxRefresh]}" Command="{Binding RefreshCommand}" />
+          <Button Grid.Column="2" Content="{Binding Text[RtxImport]}" Click="Import" IsEnabled="{Binding HasInstance}" />
+        </Grid>
+        <TextBlock Grid.Row="1" Text="{Binding Text[RtxCached]}" IsVisible="{Binding Cached}" Foreground="{DynamicResource OrionWarningTextBrush}" TextWrapping="Wrap" />
+        <Grid Grid.Row="2" ColumnDefinitions="*,*" ColumnSpacing="16">
+          <Border x:Name="Results" Grid.ColumnSpan="2" Classes="panel" Padding="8">
+            <Grid>
+              <ListBox ItemsSource="{Binding Presets}" SelectedItem="{Binding Preset}" Background="Transparent" AutomationProperties.Name="{Binding Text[RtxBrowse]}">
+                <ListBox.ItemsPanel><ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate></ListBox.ItemsPanel>
+                <ListBox.ItemTemplate><DataTemplate x:DataType="d:RtxPreset">
+                  <StackPanel Width="224" Spacing="10">
+                    <views:ProjectCoverView SourceUrl="{Binding ImageUrl}" Store="{Binding $parent[UserControl].((vm:RtxViewModel)DataContext).Covers}" RtxSource="True" Height="126" />
+                    <TextBlock Text="{Binding Name}" FontSize="16" FontWeight="SemiBold" TextWrapping="Wrap" MaxHeight="65" />
+                    <TextBlock Text="{Binding GameVersion, StringFormat='Minecraft {0}'}" FontSize="12" Classes="muted" />
+                    <TextBlock Text="{Binding Release, StringFormat='BetterRTX {0}'}" FontSize="11" Foreground="{DynamicResource OrionAccentBrush}" />
+                  </StackPanel>
+                </DataTemplate></ListBox.ItemTemplate>
+              </ListBox>
+              <StackPanel IsVisible="{Binding Empty}" VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="12" Margin="24" MaxWidth="350">
+                <TextBlock Text="◇" Foreground="{DynamicResource OrionAccentBrush}" FontSize="40" HorizontalAlignment="Center" />
+                <TextBlock Text="{Binding Text[RtxEmpty]}" FontSize="20" FontWeight="SemiBold" TextAlignment="Center" TextWrapping="Wrap" />
+                <TextBlock Text="{Binding Text[RtxEmptyHint]}" Classes="muted" TextAlignment="Center" TextWrapping="Wrap" />
+              </StackPanel>
+            </Grid>
+          </Border>
+          <Border x:Name="Details" Grid.Column="1" Classes="panel" IsVisible="{Binding HasPreset}" Padding="20" Background="{DynamicResource OrionPopupBrush}">
+            <ScrollViewer><StackPanel Spacing="16">
+              <Button Content="{Binding Text[CfBackToBrowse]}" Command="{Binding ClosePresetCommand}" Classes="subtle" />
+              <views:ProjectCoverView SourceUrl="{Binding Preset.ImageUrl}" Store="{Binding Covers}" RtxSource="True" Height="164" />
+              <TextBlock Text="{Binding Preset.Name}" FontSize="24" FontWeight="SemiBold" TextWrapping="Wrap" />
+              <TextBlock Text="{Binding Preset.GameVersion, StringFormat='Minecraft {0}'}" Classes="muted" />
+              <TextBlock Text="{Binding TargetSourceText}" Classes="muted" TextWrapping="Wrap" FontSize="12" />
+              <Border Background="{DynamicResource OrionAccentSurfaceBrush}" CornerRadius="10" Padding="14"><TextBlock Text="{Binding CompatibilityText}" TextWrapping="Wrap" /></Border>
+              <Border Background="{DynamicResource OrionWarningSurfaceBrush}" CornerRadius="10" Padding="14" IsVisible="{Binding NeedsNewerRisk}">
+                <CheckBox x:Name="NewerGameRisk" IsChecked="{Binding AcceptNewerRisk}" IsEnabled="{Binding IsIdle}" HorizontalContentAlignment="Stretch">
+                  <TextBlock Text="{Binding Text[RtxAcceptNewerRisk]}" TextWrapping="Wrap" Foreground="{DynamicResource OrionWarningTextBrush}" />
+                </CheckBox>
+              </Border>
+              <TextBlock Text="{Binding Text[RtxInstallWarning]}" Classes="muted" TextWrapping="Wrap" FontSize="12" />
+              <TextBlock Text="{Binding Text[RtxAlreadyInstalled]}" IsVisible="{Binding IsSelectedInstalled}" Foreground="{DynamicResource OrionAccentBrush}" FontWeight="SemiBold" />
+              <Button Content="{Binding InstallLabel}" Command="{Binding InstallCommand}" Classes="primary" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" IsEnabled="{Binding CanInstall}" />
+              <Button Content="{Binding Text[RtxWebsite]}" Command="{Binding OpenWebsiteCommand}" Classes="subtle" />
+            </StackPanel></ScrollViewer>
+          </Border>
+        </Grid>
+      </Grid>
+      <ScrollViewer IsVisible="{Binding IsTextures}">
+        <StackPanel Spacing="18">
+          <StackPanel Spacing="6"><TextBlock Text="Vanilla RTX" FontSize="24" FontWeight="SemiBold" /><TextBlock Text="{Binding Text[RtxTextureHint]}" Classes="muted" TextWrapping="Wrap" /></StackPanel>
+          <Button Content="{Binding Text[RtxRefresh]}" Command="{Binding RefreshTexturesCommand}" Classes="subtle" />
+          <ItemsControl ItemsSource="{Binding Textures}"><ItemsControl.ItemTemplate><DataTemplate x:DataType="vm:RtxTextureItem">
+            <Border Classes="panel" Padding="20" Margin="0,0,0,12"><Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="18">
+              <Border Background="{DynamicResource OrionAccentSurfaceBrush}" Width="56" Height="56" CornerRadius="12"><TextBlock Text="◈" FontSize="28" Foreground="{DynamicResource OrionAccentBrush}" VerticalAlignment="Center" HorizontalAlignment="Center" /></Border>
+              <StackPanel Grid.Column="1" Spacing="6" VerticalAlignment="Center"><TextBlock Text="{Binding Name}" TextWrapping="Wrap" FontSize="18" FontWeight="SemiBold" /><TextBlock Text="{Binding Version}" Classes="muted" FontSize="12" />
+                <StackPanel IsVisible="{Binding IsInstalled}" Spacing="4">
+                  <TextBlock Text="{Binding InstalledVersion}" Foreground="{DynamicResource OrionAccentBrush}" />
+                  <TextBlock Text="{Binding $parent[UserControl].((vm:RtxViewModel)DataContext).Text[RtxTextureInstalledHint]}" Classes="muted" TextWrapping="Wrap" FontSize="12" />
+                </StackPanel>
+              </StackPanel>
+              <Button Grid.Column="2" Content="{Binding ActionLabel}" Command="{Binding $parent[UserControl].((vm:RtxViewModel)DataContext).InstallTextureCommand}" CommandParameter="{Binding Pack}" IsEnabled="{Binding CanInstall}" Classes="primary" VerticalAlignment="Center" />
+            </Grid></Border>
+          </DataTemplate></ItemsControl.ItemTemplate></ItemsControl>
+        </StackPanel>
+      </ScrollViewer>
+      <ScrollViewer IsVisible="{Binding IsConfiguration}">
+        <StackPanel Spacing="18" MaxWidth="820" HorizontalAlignment="Left">
+          <Border Classes="panel" IsEnabled="{Binding HasInstance}"><StackPanel Spacing="14">
+            <TextBlock Text="{Binding FamilyTitle}" Foreground="{DynamicResource OrionAccentBrush}" FontWeight="SemiBold" />
+            <TextBlock Text="{Binding Text[RtxLaunchTitle]}" FontSize="20" FontWeight="SemiBold" />
+            <CheckBox Content="{Binding Text[RtxForceLaunch]}" IsChecked="{Binding EnableOnLaunch}" />
+            <CheckBox Content="{Binding Text[RtxVSync]}" IsChecked="{Binding DisableVSync}" IsEnabled="{Binding EnableOnLaunch}" />
+            <CheckBox Content="{Binding Text[RtxAdvancedVideo]}" IsChecked="{Binding AdvancedVideo}" />
+            <TextBlock Text="{Binding Text[RtxLaunchHint]}" Classes="muted" TextWrapping="Wrap" />
+            <Button Content="{Binding Text[RtxSaveConfiguration]}" Command="{Binding SaveConfigurationCommand}" IsEnabled="{Binding StateKnown}" Classes="primary" />
+            <Button Content="{Binding Text[RtxResetPreferences]}" Command="{Binding ResetPreferencesCommand}" />
+          </StackPanel></Border>
+          <Border Classes="panel" IsVisible="{Binding IsBetter}"><StackPanel Spacing="14">
+            <TextBlock Text="{Binding Text[RtxSetupTitle]}" FontSize="20" FontWeight="SemiBold" />
+            <TextBlock Text="{Binding Text[RtxSetupHint]}" Classes="muted" TextWrapping="Wrap" />
+            <WrapPanel>
+              <Button Content="{Binding Text[RtxVerify]}" Command="{Binding VerifyCommand}" IsEnabled="{Binding HasInstance}" Margin="0,0,8,8" />
+              <Button Content="{Binding Text[RtxImportMaterials]}" IsEnabled="False" ToolTip.Tip="{Binding Text[RtxRawBlocked]}" Margin="0,0,8,8" />
+              <Button Content="{Binding Text[RtxOfficialSetup]}" Command="{Binding OpenSetupCommand}" Classes="subtle" Margin="0,0,8,8" />
+            </WrapPanel>
+          </StackPanel></Border>
+          <Border Classes="panel" IsVisible="{Binding IsBetter}"><StackPanel Spacing="14">
+            <TextBlock Text="{Binding Text[RtxCreatorLinks]}" FontSize="20" FontWeight="SemiBold" />
+            <TextBlock Text="{Binding Text[RtxCreatorLinksHint]}" Classes="muted" TextWrapping="Wrap" />
+            <TextBox Text="{Binding LinkInput}" Watermark="brtx://creator/HASH" />
+            <WrapPanel>
+              <Button Content="{Binding Text[RtxLoadLink]}" Command="{Binding ResolveLinkCommand}" Margin="0,0,8,8" />
+              <Button Content="{Binding Text[RtxCreator]}" Command="{Binding OpenCreatorCommand}" Classes="subtle" Margin="0,0,8,8" />
+              <Button Content="{Binding Text[RtxProtocol]}" Command="{Binding RegisterProtocolCommand}" IsVisible="{Binding ProtocolAvailable}" Margin="0,0,8,8" />
+              <Button Content="{Binding Text[RtxProtocolRemove]}" Command="{Binding UnregisterProtocolCommand}" IsVisible="{Binding ProtocolEnabled}" Classes="subtle" />
+            </WrapPanel>
+            <StackPanel IsVisible="{Binding HasPending}" Spacing="8">
+              <TextBlock Text="{Binding PendingFile}" TextWrapping="Wrap" />
+              <Button Content="{Binding Text[RtxImport]}" Command="{Binding ImportPendingCommand}" />
+            </StackPanel>
+          </StackPanel></Border>
+          <Border Classes="panel" IsVisible="{Binding IsBetter}"><StackPanel Spacing="14">
+            <TextBlock Text="{Binding Text[RtxExport]}" FontSize="20" FontWeight="SemiBold" />
+            <TextBlock Text="{Binding Text[RtxExportHint]}" Classes="muted" TextWrapping="Wrap" />
+            <WrapPanel>
+              <Button Content="{Binding Text[RtxExportCurrent]}" Click="ExportCurrent" Margin="0,0,8,8" />
+              <Button Content="{Binding Text[RtxExportOriginal]}" Click="ExportOriginal" Margin="0,0,8,8" />
+            </WrapPanel>
+          </StackPanel></Border>
+          <Border Classes="panel" IsVisible="{Binding IsVanilla}"><StackPanel Spacing="14">
+            <TextBlock Text="DLSS" FontSize="20" FontWeight="SemiBold" />
+            <TextBlock Text="{Binding DlssStatus}" Foreground="{DynamicResource OrionAccentBrush}" TextWrapping="Wrap" />
+            <TextBlock Text="{Binding Text[RtxDlssWarning]}" Classes="muted" TextWrapping="Wrap" />
+            <WrapPanel>
+              <Button Content="{Binding Text[RtxDlssLatest]}" Command="{Binding LatestDlssCommand}" Margin="0,0,8,8" />
+              <Button Content="{Binding Text[RtxDlssLocal]}" Click="ImportDlss" Margin="0,0,8,8" />
+              <Button Content="{Binding Text[RtxDlssRestore]}" Command="{Binding RestoreDlssCommand}" Margin="0,0,8,8" />
+            </WrapPanel>
+          </StackPanel></Border>
+          <Border Classes="panel" IsVisible="{Binding IsBetter}"><StackPanel Spacing="14">
+            <TextBlock Text="{Binding Text[RtxRecovery]}" FontSize="20" FontWeight="SemiBold" />
+            <TextBlock Text="{Binding InstalledLabel}" Foreground="{DynamicResource OrionAccentBrush}" TextWrapping="Wrap" />
+            <TextBlock Text="{Binding Text[RtxSafeRecoveryHint]}" Classes="muted" TextWrapping="Wrap" />
+            <Button Content="{Binding Text[RtxRestore]}" Command="{Binding RestoreCommand}" IsEnabled="{Binding CanRestore}" />
+          </StackPanel></Border>
+          <Border Classes="panel" IsVisible="{Binding IsBetter}"><StackPanel Spacing="12">
+            <TextBlock Text="{Binding Text[RtxRequirements]}" FontSize="20" FontWeight="SemiBold" />
+            <TextBlock Text="{Binding Text[RtxRequirementsHint]}" Classes="muted" TextWrapping="Wrap" />
+            <Button Content="{Binding Text[RtxCreator]}" Command="{Binding OpenCreatorCommand}" Classes="subtle" />
+          </StackPanel></Border>
+        </StackPanel>
+      </ScrollViewer>
+      <Grid IsVisible="{Binding IsCreator}" RowDefinitions="Auto,Auto,*" RowSpacing="14">
+        <Border Classes="panel" Padding="18"><StackPanel Spacing="10">
+          <TextBlock Text="{Binding Text[RtxCreatorNativeHint]}" TextWrapping="Wrap" Classes="muted" />
+          <TextBlock Text="{Binding Text[RtxCreatorServiceNotice]}" TextWrapping="Wrap" Foreground="{DynamicResource OrionWarningTextBrush}" FontSize="12" />
+          <WrapPanel>
+            <ComboBox ItemsSource="{Binding CreatorVersions}" SelectedItem="{Binding CreatorVersion}" MinWidth="200" Margin="0,0,10,8" AutomationProperties.Name="{Binding Text[RtxCreatorChooseVersion]}">
+              <ComboBox.ItemTemplate><DataTemplate x:DataType="d:RtxCreatorVersion"><TextBlock Text="{Binding Label}" /></DataTemplate></ComboBox.ItemTemplate>
+            </ComboBox>
+            <Button Content="{Binding Text[RtxCreatorLoad]}" Command="{Binding LoadCreatorCommand}" Margin="0,0,10,8" />
+            <Button Content="{Binding Text[RtxRefresh]}" Command="{Binding RefreshCreatorCommand}" Classes="subtle" Margin="0,0,10,8" />
+            <Button Content="{Binding Text[ResetDefaults]}" Command="{Binding ResetCreatorCommand}" IsEnabled="{Binding CreatorReady}" Classes="subtle" Margin="0,0,10,8" />
+            <Button Content="{Binding Text[RtxCreatorBuild]}" Command="{Binding BuildCreatorCommand}" IsEnabled="{Binding CreatorReady}" Classes="primary" Margin="0,0,10,8" />
+            <Button Content="{Binding Text[RtxCreatorExport]}" Click="ExportCreatorSettings" IsEnabled="{Binding CreatorReady}" Margin="0,0,10,8" />
+          </WrapPanel>
+        </StackPanel></Border>
+        <Grid Grid.Row="1" ColumnDefinitions="*,*" ColumnSpacing="12">
+          <ComboBox ItemsSource="{Binding CreatorCategories}" SelectedItem="{Binding CreatorCategory}" HorizontalAlignment="Stretch" AutomationProperties.Name="{Binding Text[RtxCreatorCategory]}">
+            <ComboBox.ItemTemplate><DataTemplate x:DataType="d:RtxCreatorCategory"><TextBlock Text="{Binding Label}" TextTrimming="CharacterEllipsis" /></DataTemplate></ComboBox.ItemTemplate>
+          </ComboBox>
+          <TextBox Grid.Column="1" Text="{Binding CreatorQuery}" Watermark="{Binding Text[RtxCreatorSearch]}" />
+        </Grid>
+        <ScrollViewer Grid.Row="2"><ItemsControl ItemsSource="{Binding CreatorFields}" IsEnabled="{Binding CreatorReady}">
+          <ItemsControl.ItemTemplate><DataTemplate x:DataType="vm:RtxCreatorFieldViewModel">
+            <Border Classes="panel" Padding="18" Margin="0,0,0,10" IsVisible="{Binding Visible}"><StackPanel Spacing="10">
+              <TextBlock Text="{Binding Label}" FontWeight="SemiBold" TextWrapping="Wrap" />
+              <TextBlock Text="{Binding Description}" Classes="muted" TextWrapping="Wrap" FontSize="12" />
+              <CheckBox IsChecked="{Binding Toggle}" IsVisible="{Binding IsToggle}" Content="{Binding Label}" />
+              <NumericUpDown Value="{Binding Number}" Minimum="{Binding Minimum}" Maximum="{Binding Maximum}" Increment="{Binding Increment}" IsVisible="{Binding IsNumber}" Width="220" HorizontalAlignment="Left" AutomationProperties.Name="{Binding Label}" />
+              <ComboBox ItemsSource="{Binding Options}" SelectedItem="{Binding Choice}" IsVisible="{Binding IsSelect}" HorizontalAlignment="Stretch" AutomationProperties.Name="{Binding Label}" />
+              <WrapPanel IsVisible="{Binding IsColor}">
+                <StackPanel Margin="0,0,12,0"><TextBlock Text="R" /><NumericUpDown Value="{Binding Red}" Minimum="{Binding Minimum}" Maximum="{Binding Maximum}" Increment="{Binding Increment}" Width="150" AutomationProperties.Name="Red" /></StackPanel>
+                <StackPanel Margin="0,0,12,0"><TextBlock Text="G" /><NumericUpDown Value="{Binding Green}" Minimum="{Binding Minimum}" Maximum="{Binding Maximum}" Increment="{Binding Increment}" Width="150" AutomationProperties.Name="Green" /></StackPanel>
+                <StackPanel><TextBlock Text="B" /><NumericUpDown Value="{Binding Blue}" Minimum="{Binding Minimum}" Maximum="{Binding Maximum}" Increment="{Binding Increment}" Width="150" AutomationProperties.Name="Blue" /></StackPanel>
+              </WrapPanel>
+            </StackPanel></Border>
+          </DataTemplate></ItemsControl.ItemTemplate>
+        </ItemsControl></ScrollViewer>
+      </Grid>
+    </Grid>
+    <StackPanel Grid.Row="2" Spacing="8">
+      <ScrollViewer IsVisible="{Binding HasOutcomes}" MaxHeight="100"><ItemsControl ItemsSource="{Binding Outcomes}">
+        <ItemsControl.ItemTemplate><DataTemplate x:DataType="rtx:RtxBatchResult">
+          <StackPanel Orientation="Horizontal" Spacing="8">
+            <TextBlock Text="✓" IsVisible="{Binding Success}" Foreground="{DynamicResource OrionAccentBrush}" />
+            <TextBlock Text="!" IsVisible="{Binding !Success}" Foreground="{DynamicResource OrionErrorTextBrush}" />
+            <TextBlock Text="{Binding Name}" FontWeight="SemiBold" /><TextBlock Text="{Binding Error}" Classes="muted" TextWrapping="Wrap" />
+          </StackPanel>
+        </DataTemplate></ItemsControl.ItemTemplate>
+      </ItemsControl></ScrollViewer>
+      <Border Classes="panel" Padding="12" IsVisible="{Binding HasError}" Background="{DynamicResource OrionErrorSurfaceBrush}"><TextBlock Text="{Binding Error}" Foreground="{DynamicResource OrionErrorTextBrush}" TextWrapping="Wrap" /></Border>
+      <TextBlock Text="{Binding Text[RtxChooseInstance]}" IsVisible="{Binding !HasInstance}" Classes="muted" TextWrapping="Wrap" />
+      <ProgressBar Value="{Binding Progress}" IsIndeterminate="{Binding Indeterminate}" IsVisible="{Binding Busy}" Height="3" />
+      <Grid ColumnDefinitions="*,Auto"><TextBlock Text="{Binding Status}" Classes="muted" TextWrapping="Wrap" FontSize="12" VerticalAlignment="Center" /><Button Grid.Column="1" Content="{Binding Text[Cancel]}" Command="{Binding CancelCommand}" IsVisible="{Binding Busy}" /></Grid>
+    </StackPanel>
+  </Grid>
+</UserControl>

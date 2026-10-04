@@ -1,0 +1,5 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><OutputType>Exe</OutputType></PropertyGroup>
+  <ItemGroup><ProjectReference Include="../../src/Orion.Infrastructure/Orion.Infrastructure.csproj" /></ItemGroup>
+  <ItemGroup><SupportedPlatform Include="linux" /></ItemGroup>
+</Project>

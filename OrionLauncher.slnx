@@ -1,0 +1,16 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Orion.Domain/Orion.Domain.csproj" />
+    <Project Path="src/Orion.Application/Orion.Application.csproj" />
+    <Project Path="src/Orion.Infrastructure/Orion.Infrastructure.csproj" />
+    <Project Path="src/Orion.Desktop/Orion.Desktop.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Orion.Tests/Orion.Tests.csproj" />
+  </Folder>
+  <Folder Name="/tools/">
+    <Project Path="tools/Orion.BuildCredentials/Orion.BuildCredentials.csproj" />
+    <Project Path="tools/Orion.CurseForgeSmoke/Orion.CurseForgeSmoke.csproj" />
+    <Project Path="tools/Orion.RtxSmoke/Orion.RtxSmoke.csproj" />
+  </Folder>
+</Solution>

@@ -1,0 +1,23 @@
+name: Issue classification
+on:
+  issues:
+    types: [opened, reopened, labeled, unlabeled]
+permissions:
+  contents: read
+  issues: write
+concurrency:
+  group: issue-classification-${{ github.repository }}-${{ github.event.issue.number }}
+  cancel-in-progress: false
+jobs:
+  classify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      # Issue events use trusted code from the default branch, never issue text.
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - name: Check category and request classification
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 .github/scripts/classify_issue.py

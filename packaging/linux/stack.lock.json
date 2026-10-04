@@ -1,0 +1,63 @@
+{
+  "xodus": {
+    "tag": "0.7.3",
+    "url": "https://github.com/BedrockNative/xodus/releases/download/0.7.3/xodus-0.7.3-linux-x86_64.tar.gz",
+    "sha256": "57f6a353c6c6b0d5d698b36f3c3fe65afa71fe7a1a2a6d607738b3dc135f5591"
+  },
+  "winegdk": {
+    "tag": "11.18-8-winrt",
+    "url": "https://github.com/BedrockNative/WineGDK/releases/download/11.18-8-winrt/wine-11.18-8-winrt.tar.gz",
+    "sha256": "5a2cbc765631c88d83bf870a1a811e9b00fbc6efdd526b9a9c9368bf99fd4d4e"
+  },
+  "wine-mono": {
+    "tag": "11.2.0",
+    "fileName": "wine-mono-11.2.0-x86.msi",
+    "subdir": "mono",
+    "url": "https://github.com/wine-mono/wine-mono/releases/download/wine-mono-11.2.0/wine-mono-11.2.0-x86.msi",
+    "sha256": "b4525679e7da30d4658ceb85739cbc55c771791054abbb4b3152fe96ded0b897"
+  },
+  "wine-gecko-x86": {
+    "tag": "2.47.4",
+    "fileName": "wine-gecko-2.47.4-x86.msi",
+    "subdir": "gecko",
+    "url": "https://dl.winehq.org/wine/wine-gecko/2.47.4/wine-gecko-2.47.4-x86.msi",
+    "sha256": "26cecc47706b091908f7f814bddb074c61beb8063318e9efc5a7f789857793d6"
+  },
+  "wine-gecko-x64": {
+    "tag": "2.47.4",
+    "fileName": "wine-gecko-2.47.4-x86_64.msi",
+    "subdir": "gecko",
+    "url": "https://dl.winehq.org/wine/wine-gecko/2.47.4/wine-gecko-2.47.4-x86_64.msi",
+    "sha256": "e590b7d988a32d6aa4cf1d8aa3aa3d33766fdd4cf4c89c2dcc2095ecb28d066f"
+  },
+  "ffmpeg": {
+    "tag": "9.0.2",
+    "url": "https://ffmpeg.org/releases/ffmpeg-9.0.2.tar.xz",
+    "sha256": "8c3850283eb25fa026482078a04051e0be17347b09ef81a0849bec15a96e002e"
+  },
+  "dxvk-nvapi-source": {
+    "tag": "0.9.2",
+    "url": "https://codeload.github.com/jp7677/dxvk-nvapi/tar.gz/f9fdf268e888d17ae9875a4f01908164ff05f740",
+    "sha256": "16ecace6c927ba2bc05152a674c9364781d16a953ce8049192f6a54b125024db"
+  },
+  "vulkan-headers-source": {
+    "tag": "2cd90f9d20df57eac214c148f3aed885372ddcfe",
+    "url": "https://codeload.github.com/KhronosGroup/Vulkan-Headers/tar.gz/2cd90f9d20df57eac214c148f3aed885372ddcfe",
+    "sha256": "e3865307e665f6a4ac4f7bbca7b3ba95e4191c7f8adf9f04b084ef514a2454e9"
+  },
+  "vkroots-source": {
+    "tag": "ee76e620798612c52fb8dcc32a1058a0a3538930",
+    "url": "https://codeload.github.com/misyltoad/vkroots/tar.gz/ee76e620798612c52fb8dcc32a1058a0a3538930",
+    "sha256": "efa6759a42b05b1068d73ce660df35616067bec190bcdbad69abb05aa2bcbe37"
+  },
+  "appimagetool": {
+    "tag": "1.9.1",
+    "url": "https://github.com/AppImage/appimagetool/releases/download/1.9.1/appimagetool-x86_64.AppImage",
+    "sha256": "ed4ce84f0d9caff66f50bcca6ff6f35aae54ce8135408b3fa33abfc3cb384eb0"
+  },
+  "appimage-runtime": {
+    "tag": "continuous-2026-10-04",
+    "url": "https://github.com/AppImage/type2-runtime/releases/download/continuous/runtime-x86_64",
+    "sha256": "156f4bdbde9c52d01814600013e0a273f0118dc2de98975f3c8c63427ec79074"
+  }
+}

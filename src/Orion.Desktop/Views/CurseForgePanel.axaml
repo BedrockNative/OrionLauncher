@@ -1,0 +1,148 @@
+<UserControl xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:views="using:Orion.Desktop.Views" xmlns:vm="using:Orion.Desktop.ViewModels" xmlns:cf="using:Orion.Infrastructure.CurseForge"
+    x:Class="Orion.Desktop.Views.CurseForgePanel" x:DataType="vm:CurseForgeViewModel">
+  <UserControl.Styles>
+    <Style Selector="ListBoxItem"><Setter Property="Padding" Value="0" /><Setter Property="Margin" Value="6" /><Setter Property="CornerRadius" Value="16" /><Setter Property="Background" Value="{DynamicResource OrionInsetBrush}" /><Setter Property="BorderBrush" Value="{DynamicResource OrionBorderBrush}" /><Setter Property="BorderThickness" Value="1" /></Style>
+    <Style Selector="ListBoxItem /template/ ContentPresenter"><Setter Property="CornerRadius" Value="16" /></Style>
+    <Style Selector="ListBoxItem:pointerover /template/ ContentPresenter">
+      <Setter Property="Background" Value="{DynamicResource OrionAccentSurfaceBrush}" /><Setter Property="BorderBrush" Value="{DynamicResource OrionAccentBrush}" />
+    </Style>
+    <Style Selector="ListBoxItem:selected /template/ ContentPresenter, ListBoxItem:selected:pointerover /template/ ContentPresenter">
+      <Setter Property="Background" Value="{DynamicResource OrionSelectionBrush}" /><Setter Property="Foreground" Value="{DynamicResource OrionTextBrush}" />
+    </Style>
+  </UserControl.Styles>
+  <Grid RowDefinitions="Auto,*,Auto" RowSpacing="16">
+    <StackPanel Spacing="14">
+      <StackPanel Spacing="6"><TextBlock Text="CurseForge" Classes="heading" /><TextBlock Text="{Binding Text[CfBrowseIntro]}" Classes="muted" TextWrapping="Wrap" /></StackPanel>
+      <Grid ColumnDefinitions="Auto,*,160,Auto" ColumnSpacing="10" IsEnabled="{Binding IsIdle}">
+        <Button Content="{Binding Text[CfHome]}" Command="{Binding HomeCommand}" Classes="subtle" />
+        <TextBox Grid.Column="1" x:Name="CfSearchBox" Text="{Binding Query}" Watermark="{Binding Text[CfSearchHint]}">
+          <TextBox.KeyBindings><KeyBinding Gesture="Enter" Command="{Binding SearchProjectsCommand}" /></TextBox.KeyBindings>
+        </TextBox>
+        <ComboBox x:Name="CfCategoryPicker" Grid.Column="2" ItemsSource="{Binding Categories}" SelectedItem="{Binding Category}" HorizontalAlignment="Stretch" AutomationProperties.Name="{Binding Text[CfCategory]}">
+          <ComboBox.ItemTemplate><DataTemplate x:DataType="cf:CfCategory"><TextBlock Text="{Binding Name}" /></DataTemplate></ComboBox.ItemTemplate>
+        </ComboBox>
+        <Button Grid.Column="3" Content="{Binding Text[CfSearch]}" Command="{Binding SearchProjectsCommand}" IsEnabled="{Binding HasCurseForge}" Classes="primary" />
+      </Grid>
+      <Border Classes="panel" Padding="12" IsVisible="{Binding !HasCurseForge}"><TextBlock Text="{Binding Text[CfUnavailable]}" TextWrapping="Wrap" Classes="muted" /></Border>
+    </StackPanel>
+    <Grid Grid.Row="1" ColumnDefinitions="*,*" ColumnSpacing="16" IsEnabled="{Binding IsIdle}">
+      <Border x:Name="ProjectResults" Grid.ColumnSpan="2" Classes="panel" Padding="8" Background="{DynamicResource OrionPopupBrush}">
+        <Grid RowDefinitions="Auto,*,Auto">
+          <Grid ColumnDefinitions="*,Auto" Margin="14,12,14,16" ColumnSpacing="14">
+            <StackPanel Spacing="5"><TextBlock Text="{Binding ResultsTitle}" FontSize="21" FontWeight="SemiBold" /><TextBlock Text="{Binding Text[CfCollectionHint]}" Classes="muted" FontSize="12" TextWrapping="Wrap" /></StackPanel>
+            <Border Grid.Column="1" Background="{DynamicResource OrionAccentSurfaceBrush}" CornerRadius="20" Padding="14,7" VerticalAlignment="Center"><TextBlock Text="{Binding ResultsCategory}" Foreground="{DynamicResource OrionAccentBrush}" FontWeight="SemiBold" FontSize="12" /></Border>
+          </Grid>
+          <ListBox x:Name="ProjectList" Grid.Row="1" ItemsSource="{Binding Projects}" SelectedItem="{Binding Project}" Background="Transparent" AutomationProperties.Name="{Binding Text[CfProjects]}">
+            <ListBox.ItemsPanel><ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate></ListBox.ItemsPanel>
+            <ListBox.ItemTemplate><DataTemplate x:DataType="cf:CfProject">
+              <Grid Width="{Binding $parent[views:CurseForgePanel].ProjectCardWidth}" RowDefinitions="158,*,Auto" Height="342" Margin="0" ToolTip.Tip="{Binding Name}">
+                <views:ProjectCoverView SourceUrl="{Binding CoverUrl}" Store="{Binding $parent[UserControl].((vm:CurseForgeViewModel)DataContext).Covers}" Margin="10,10,10,0" />
+                <StackPanel Grid.Row="1" Spacing="8" Margin="16,14,16,10">
+                  <TextBlock Text="{Binding Name}" FontSize="17" FontWeight="SemiBold" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" MaxLines="2" Height="44" />
+                  <TextBlock Text="{Binding AuthorNames}" Foreground="{DynamicResource OrionAccentBrush}" FontSize="12" TextTrimming="CharacterEllipsis" />
+                  <TextBlock Text="{Binding Summary}" Classes="muted" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" MaxLines="2" FontSize="13" />
+                </StackPanel>
+                <Border Grid.Row="2" BorderBrush="{DynamicResource OrionBorderBrush}" BorderThickness="0,1,0,0" Padding="16,10">
+                  <Grid ColumnDefinitions="*,Auto"><TextBlock Text="{Binding DownloadCount, StringFormat='↓ {0:N0}'}" Classes="muted" FontSize="12" VerticalAlignment="Center" /><TextBlock Grid.Column="1" Text="→" FontSize="18" Foreground="{DynamicResource OrionAccentBrush}" /></Grid>
+                </Border>
+              </Grid>
+            </DataTemplate></ListBox.ItemTemplate>
+          </ListBox>
+          <StackPanel Grid.Row="1" IsVisible="{Binding EmptyProjects}" Spacing="12" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="20" MaxWidth="340">
+            <TextBlock Text="◇" FontSize="40" HorizontalAlignment="Center" Foreground="{DynamicResource OrionAccentBrush}" />
+            <TextBlock Text="{Binding EmptyTitle}" FontSize="20" FontWeight="SemiBold" TextWrapping="Wrap" TextAlignment="Center" />
+            <TextBlock Text="{Binding Text[CfDiscoverHint]}" Classes="muted" TextWrapping="Wrap" TextAlignment="Center" />
+          </StackPanel>
+          <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Center" Spacing="10" Margin="8">
+            <Button Content="‹" Command="{Binding PreviousProjectsCommand}" IsEnabled="{Binding CanPrevious}" AutomationProperties.Name="{Binding Text[CfPrevious]}" />
+            <TextBlock Text="{Binding PageLabel}" VerticalAlignment="Center" Classes="muted" FontSize="11" />
+            <Button Content="›" Command="{Binding NextProjectsCommand}" IsEnabled="{Binding CanNext}" AutomationProperties.Name="{Binding Text[CfNext]}" />
+          </StackPanel>
+        </Grid>
+      </Border>
+      <Border x:Name="ProjectDetails" IsVisible="{Binding HasProject}" Grid.Column="1" Classes="panel" Padding="18" Background="{DynamicResource OrionPopupBrush}">
+        <Grid>
+          <ScrollViewer IsVisible="{Binding HasProject}" HorizontalScrollBarVisibility="Disabled">
+            <StackPanel Spacing="14" Margin="0,0,8,0">
+              <Button Content="{Binding Text[CfBackToBrowse]}" Command="{Binding CloseProjectCommand}" Classes="subtle" />
+              <views:ProjectCoverView SourceUrl="{Binding Project.CoverUrl}" Store="{Binding Covers}" Height="180" />
+              <TextBlock Text="{Binding Project.Name}" FontSize="22" FontWeight="SemiBold" TextWrapping="Wrap" />
+              <TextBlock Text="{Binding Project.AuthorNames}" Foreground="{DynamicResource OrionAccentBrush}" TextWrapping="Wrap" />
+              <TextBlock Text="{Binding Project.Summary}" TextWrapping="Wrap" Classes="muted" />
+              <WrapPanel>
+                <Button Content="{Binding Text[CfFiles]}" Command="{Binding LoadFilesCommand}" Margin="0,0,8,8" />
+                <Button Content="{Binding Text[CfWebsite]}" Click="OpenProject" Classes="subtle" Margin="0,0,0,8" />
+              </WrapPanel>
+              <TextBlock Text="{Binding Text[CfChooseFile]}" FontWeight="SemiBold" />
+              <ComboBox ItemsSource="{Binding Files}" SelectedItem="{Binding SelectedFile}" HorizontalAlignment="Stretch" MaxDropDownHeight="260" PlaceholderText="{Binding Text[CfChooseFile]}">
+                <ComboBox.ItemTemplate><DataTemplate x:DataType="cf:CfFile"><TextBlock Text="{Binding VersionLabel}" TextTrimming="CharacterEllipsis" MaxWidth="340" ToolTip.Tip="{Binding VersionLabel}" /></DataTemplate></ComboBox.ItemTemplate>
+              </ComboBox>
+              <Button Content="{Binding Text[CfMoreFiles]}" Command="{Binding MoreFilesCommand}" Classes="subtle" IsVisible="{Binding HasFile}" />
+              <StackPanel Spacing="12" IsVisible="{Binding HasFile}">
+                <Border Height="1" Background="{DynamicResource OrionBorderBrush}" />
+                <TextBlock Text="{Binding Text[CfDestination]}" FontSize="17" FontWeight="SemiBold" />
+                <Button Content="{Binding Text[ContentRefresh]}" Command="{Binding RefreshCommand}" Classes="subtle" />
+                <ComboBox ItemsSource="{Binding Destinations.Modes}" SelectedIndex="{Binding Destinations.ModeIndex}" HorizontalAlignment="Stretch" AutomationProperties.Name="{Binding Text[CfDestination]}" />
+                <TextBlock Text="{Binding Text[CfSharedHint]}" IsVisible="{Binding Destinations.IsShared}" Classes="muted" FontSize="12" TextWrapping="Wrap" />
+                <TextBlock Text="{Binding Text[ContentCopyWorldHint]}" IsVisible="{Binding IsWorldFile}" Classes="muted" FontSize="12" TextWrapping="Wrap" />
+                <ComboBox ItemsSource="{Binding Destinations.Targets}" SelectedItem="{Binding Destinations.Target}" IsVisible="{Binding !Destinations.IsShared}" HorizontalAlignment="Stretch" PlaceholderText="{Binding Text[CfChooseDestination]}">
+                  <ComboBox.ItemTemplate><DataTemplate x:DataType="vm:ContentTargetViewModel"><TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis" /></DataTemplate></ComboBox.ItemTemplate>
+                </ComboBox>
+                <StackPanel IsVisible="{Binding !Destinations.IsShared}" Spacing="8">
+                  <TextBlock Text="{Binding Destinations.Target.Warning}" Foreground="{DynamicResource OrionWarningTextBrush}" TextWrapping="Wrap" />
+                  <StackPanel IsVisible="{Binding IsWorldFile}" Spacing="8">
+                    <ComboBox ItemsSource="{Binding Destinations.Target.Profiles}" SelectedItem="{Binding Destinations.Target.Profile}" HorizontalAlignment="Stretch" PlaceholderText="{Binding Text[ContentChooseProfile]}" />
+                    <TextBlock Text="{Binding Text[ContentNeedsProfile]}" IsVisible="{Binding !Destinations.Target.HasProfiles}" Classes="muted" TextWrapping="Wrap" FontSize="12" />
+                  </StackPanel>
+                </StackPanel>
+                <TextBlock Text="{Binding Text[CfNoInstances]}" IsVisible="{Binding Destinations.NoInstances}" Classes="muted" TextWrapping="Wrap" FontSize="12" />
+                <TextBlock Text="{Binding Text[CfInstallHint]}" Classes="muted" FontSize="11" TextWrapping="Wrap" />
+                <TextBlock Text="{Binding DependencyHint}" Foreground="{DynamicResource OrionWarningTextBrush}" FontSize="12" TextWrapping="Wrap" />
+                <Button Content="{Binding Text[CfInstall]}" Command="{Binding InstallFileCommand}" Classes="primary" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" />
+              </StackPanel>
+            </StackPanel>
+          </ScrollViewer>
+        </Grid>
+      </Border>
+    </Grid>
+    <StackPanel Grid.Row="2" Spacing="8">
+      <TextBlock Text="{Binding Error}" Foreground="{DynamicResource OrionErrorTextBrush}" TextWrapping="Wrap" MaxHeight="75" />
+      <ProgressBar IsVisible="{Binding IsBusy}" IsIndeterminate="{Binding !Downloading}" Value="{Binding Progress}" Height="4" />
+      <Grid ColumnDefinitions="*,Auto">
+        <TextBlock Text="{Binding Status}" Classes="muted" FontSize="12" VerticalAlignment="Center" />
+        <Button Grid.Column="1" Content="{Binding Text[Cancel]}" Command="{Binding CancelCommand}" IsVisible="{Binding IsBusy}" Classes="subtle" />
+      </Grid>
+    </StackPanel>
+    <Border Grid.RowSpan="3" IsVisible="{Binding IsManualDownload}" Background="{DynamicResource OrionOverlayBrush}" CornerRadius="12" Padding="18">
+      <Border Classes="panel" Padding="24" MaxWidth="660" VerticalAlignment="Center">
+        <ScrollViewer HorizontalScrollBarVisibility="Disabled" MaxHeight="620">
+          <StackPanel Spacing="14">
+            <TextBlock Text="{Binding Text[CfManualTitle]}" FontSize="23" FontWeight="SemiBold" />
+            <TextBlock Text="{Binding Text[CfManualHint]}" Classes="muted" TextWrapping="Wrap" />
+            <Border Background="{DynamicResource OrionInsetBrush}" CornerRadius="10" Padding="14">
+              <StackPanel Spacing="6">
+                <TextBlock Text="{Binding Text[CfManualExpected]}" Classes="muted" FontSize="11" />
+                <TextBlock Text="{Binding ManualDownload.File.FileName}" FontWeight="SemiBold" TextWrapping="Wrap" />
+              </StackPanel>
+            </Border>
+            <TextBlock Text="{Binding Text[CfManualFolder]}" FontWeight="SemiBold" />
+            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+              <TextBox Text="{Binding DownloadFolder, Mode=OneWay}" IsReadOnly="True" AutomationProperties.Name="{Binding Text[CfManualFolder]}" />
+              <Button Grid.Column="1" Content="{Binding Text[CfManualChooseFolder]}" Click="ChooseDownloadFolder" />
+            </Grid>
+            <TextBlock Text="{Binding Text[CfManualPreserve]}" Classes="muted" TextWrapping="Wrap" FontSize="12" />
+            <ProgressBar IsIndeterminate="True" Height="4" />
+            <TextBlock Text="{Binding ManualStatus}" Foreground="{DynamicResource OrionAccentBrush}" TextWrapping="Wrap" />
+            <TextBlock Text="{Binding ManualBrowserError}" Foreground="{DynamicResource OrionWarningTextBrush}" TextWrapping="Wrap" />
+            <TextBox Text="{Binding ManualDownload.Page.AbsoluteUri, Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap" FontSize="11" AutomationProperties.Name="CurseForge URL" />
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="10">
+              <Button Content="{Binding Text[Cancel]}" Command="{Binding CancelCommand}" />
+              <Button Content="{Binding Text[CfManualOpen]}" Command="{Binding OpenManualPageCommand}" Classes="primary" />
+            </StackPanel>
+          </StackPanel>
+        </ScrollViewer>
+      </Border>
+    </Border>
+  </Grid>
+</UserControl>
