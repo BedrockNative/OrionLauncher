@@ -1,4 +1,5 @@
 using Avalonia.Headless;
+using Avalonia.Controls;
 using Orion.Desktop.Composition;
 using Orion.Desktop.ViewModels;
 using Orion.Desktop.Views;
@@ -12,6 +13,46 @@ namespace Orion.Tests;
 [Collection("Avalonia UI")]
 public sealed class InstanceFolderTests
 {
+    [Fact]
+    public async Task FileManagerSelectionSurvivesLanguageRefreshAndAutosave()
+    {
+        using var session = HeadlessUnitTestSession.StartNew(typeof(UiTests));
+        await session.Dispatch<bool>(async () =>
+        {
+            using var dir = new TestDirectory();
+            await using var services = new LauncherServices(dir.Paths, new() { FileManager = "dolphin" }, ["orion"]);
+            var model = new MainViewModel(services, new RecordingDialogs());
+            var panel = new SettingsPanel { DataContext = model };
+            var window = new Window { Content = panel };
+            try
+            {
+                window.Show();
+                var picker = panel.FindControl<ComboBox>("FileManagerPicker")!;
+                Assert.Equal(1, picker.SelectedIndex);
+                picker.SelectedIndex = 2;
+                Assert.Equal("thunar", model.SelectedFileManager);
+                var selected = picker.SelectedItem;
+                model.LanguageIndex = 1;
+                model.RefreshFileManagersCommand.Execute(null);
+                Assert.Same(selected, picker.SelectedItem);
+                Assert.StartsWith("Padrão do sistema", model.FileManagers[0].Label);
+                await model.SaveSettingsCommand.ExecuteAsync(null);
+                Assert.Equal("thunar", (await services.SettingsStore.LoadAsync()).FileManager);
+                Assert.Equal("thunar", services.Settings.FileManager);
+                if (Environment.GetEnvironmentVariable("ORION_SCREENSHOT_DIR") is { } screenshots)
+                {
+                    Directory.CreateDirectory(screenshots);
+                    Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+                    AvaloniaHeadlessPlatform.ForceRenderTimerTick();
+                    using var frame = window.CaptureRenderedFrame();
+                    frame!.Save(Path.Combine(screenshots, "file-manager-settings.png"));
+                }
+            }
+            finally { window.Close(); await model.StopAllAsync(); model.DisposeProfiles(); }
+            return true;
+        }, CancellationToken.None);
+    }
+
     [Theory]
     [InlineData("Release", "Minecraft Bedrock")]
     [InlineData("Preview", "Minecraft Bedrock Preview")]

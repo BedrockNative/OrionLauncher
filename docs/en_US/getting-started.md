@@ -42,6 +42,15 @@ or launch Orion again, to restore it. Some desktops (notably GNOME without an in
 extension) do not display tray icons; reopening Orion still works, or disable background
 mode in Settings. **Quit Orion** in the tray menu exits fully and asks before stopping active work.
 
+## File manager
+
+In **Settings → General → File manager**, choose the system default or an installed
+file manager. Orion uses this selection for instance folders, `com.mojang`, content
+and logs, without changing Linux file associations. Missing applications are marked
+as not installed; install them through your distribution and click **Refresh installed
+applications**. The preference saves automatically. If a selected application is
+removed, Orion reports the error instead of silently opening another manager.
+
 ## Appearance
 
 Open **Settings → Appearance**. The three independent choices are:

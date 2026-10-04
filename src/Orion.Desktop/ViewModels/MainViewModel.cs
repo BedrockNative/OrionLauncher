@@ -10,6 +10,7 @@ using Orion.Infrastructure.Runtime;
 using Orion.Infrastructure.Games;
 using Orion.Infrastructure.Storage;
 using Avalonia.Threading;
+using Orion.Infrastructure.Linux;
 
 namespace Orion.Desktop.ViewModels;
 
@@ -40,6 +41,10 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty] private XboxProfileViewModel currentProfile;
     [ObservableProperty] private string accountStatus = "";
     public string[] Languages { get; } = ["English", "Português (Brasil)"];
+    public IReadOnlyList<FileManagerChoiceViewModel> FileManagers { get; } = DesktopFolderLauncher.Options.Select(o => new FileManagerChoiceViewModel(o)).ToArray();
+    [ObservableProperty] private int fileManagerIndex;
+    public string SelectedFileManager => DesktopFolderLauncher.Options[Math.Clamp(FileManagerIndex, 0, DesktopFolderLauncher.Options.Count - 1)].Id;
+    public void ReportFolderError(Exception error) => Dispatcher.UIThread.Post(() => SetError(error));
     public bool HasActivity => IsBusy || ContentLibrary.Busy || CurseForge.IsBusy || Rtx.Busy || games.Count != 0 || services.Downloads.HasPending;
     public event Action? AttentionRequested;
 
@@ -78,7 +83,9 @@ public partial class MainViewModel : ObservableObject
         Log = new(Text);
         languageIndex = services.Settings.Language == "pt-BR" ? 1 : 0;
         keepInBackground = services.Settings.KeepInBackground;
+        fileManagerIndex = Math.Max(0, DesktopFolderLauncher.Options.ToList().FindIndex(o => o.Id == services.Settings.FileManager));
         Text.SetLanguage(services.Settings.Language);
+        RefreshFileManagers();
         Appearance = new(services.Settings, Text);
         ContentLibrary = new(services.ContentLibrary, services.Content, () => services.Instances.ListAsync(), Text);
         CurseForge = new(services.CurseForge, new(services.ContentLibrary, services.Content, () => services.Instances.ListAsync(), Text), Text, services.ProjectCovers);
@@ -245,12 +252,13 @@ public partial class MainViewModel : ObservableObject
             return;
         var settings = new LauncherSettings(LanguageIndex == 1 ? "pt-BR" : "en-US", KeepInBackground,
             Appearance.SelectedMode.Id, Appearance.SelectedPalette.Id, Appearance.SelectedVisual.Id)
-            { Appearance = Appearance.Advanced.Snapshot() };
+            { Appearance = Appearance.Advanced.Snapshot(), FileManager = SelectedFileManager };
         settingsSave.Queue(settings);
     }
     partial void OnLanguageIndexChanged(int value)
     {
         Text.SetLanguage(value == 1 ? "pt-BR" : "en-US");
+        RefreshFileManagers();
         Appearance.RefreshLabels();
         ContentLibrary.RefreshLabels();
         CurseForge.RefreshLabels();
@@ -260,6 +268,12 @@ public partial class MainViewModel : ObservableObject
         QueueSettings();
     }
     partial void OnKeepInBackgroundChanged(bool value) => QueueSettings();
+    partial void OnFileManagerIndexChanged(int value) => QueueSettings();
+    [RelayCommand] private void RefreshFileManagers()
+    {
+        var launcher = new DesktopFolderLauncher();
+        foreach (var option in FileManagers) option.Refresh(Text, launcher);
+    }
     // Also used by shutdown and integration tests; there is no Save button in the UI.
     [RelayCommand] private async Task SaveSettingsAsync() { QueueSettings(); await settingsSave.FlushAsync(); }
     [RelayCommand] private Task OpenLogsAsync() => OpenFolderAsync(services.Paths.Logs);

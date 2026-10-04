@@ -7,6 +7,7 @@ from pathlib import Path
 import re
 import shutil
 import signal
+import struct
 import subprocess
 import sys
 import time
@@ -52,6 +53,34 @@ def stop(process):
             process.wait(timeout=10)
 
 
+def rendered_capture(path):
+    # XWDFile.h: 25 big-endian CARD32s, name, 12-byte color records, then pixels.
+    # A named/mapped X11 window can exist before Avalonia paints its first frame.
+    data = path.read_bytes()
+    if len(data) < 100:
+        return False
+    header = struct.unpack_from(">25I", data)
+    size, version, layout, _, width, height = header[:6]
+    bpp, stride, colors = header[11], header[12], header[19]
+    offset = size + colors * 12
+    if version != 7 or layout != 2 or bpp not in (24, 32) or not width or not height:
+        return False
+    step = bpp // 8
+    if size < 100 or stride < width * step or len(data) < offset + stride * height:
+        return False
+    mask = header[14] | header[15] | header[16]
+    order = "little" if header[7] == 0 else "big"
+    seen = set()
+    for y in range(height):
+        start = offset + y * stride
+        for x in range(width):
+            pixel = start + x * step
+            seen.add(int.from_bytes(data[pixel:pixel + step], order) & mask)
+            if len(seen) > 8:
+                return True
+    return False
+
+
 def gui(executable, name, env):
     with (REPORT / (name + ".log")).open("w") as log:
         process = subprocess.Popen([str(executable)], env=env, stdout=log, stderr=subprocess.STDOUT, start_new_session=True)
@@ -61,15 +90,18 @@ def gui(executable, name, env):
                 if process.poll() is not None:
                     raise RuntimeError(f"{name} exited before showing a window ({process.returncode})")
                 tree = command("xwininfo", "-root", "-tree")
-                if '"Orion Launcher"' in tree:
+                match = re.search(r'(0x[0-9a-fA-F]+) "Orion Launcher"', tree)
+                if match and "Map State: IsViewable" in command("xwininfo", "-id", match[1]):
                     (REPORT / (name + "-windows.txt")).write_text(tree)
                     time.sleep(5)
                     if process.poll() is not None:
                         raise RuntimeError(f"{name} exited after opening its window")
-                    command("xwd", "-root", "-silent", "-out", REPORT / (name + ".xwd"))
-                    return
+                    capture = REPORT / (name + ".xwd")
+                    command("xwd", "-id", match[1], "-silent", "-out", capture)
+                    if rendered_capture(capture):
+                        return
                 time.sleep(1)
-            raise RuntimeError(f"{name} never showed its main window")
+            raise RuntimeError(f"{name} never showed a rendered main window")
         finally:
             stop(process)
 

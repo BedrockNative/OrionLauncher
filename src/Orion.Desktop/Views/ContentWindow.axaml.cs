@@ -63,8 +63,12 @@ public partial class ContentWindow : Window
     {
         try
         {
-            if (Model.SelectedFolder() is { } path && !await Launcher.LaunchDirectoryInfoAsync(new(path)))
-                throw new IOException("Could not open the file manager: " + path);
+            if (Model.SelectedFolder() is { } path)
+            {
+                if (Owner is MainWindow main) await main.OpenFolderAsync(path);
+                else await new Orion.Infrastructure.Linux.DesktopFolderLauncher().OpenAsync(path, "system",
+                    ex => Dispatcher.UIThread.Post(() => Model.Error = ex.Message));
+            }
         }
         catch (Exception ex) { Model.Error = ex.Message; }
     }

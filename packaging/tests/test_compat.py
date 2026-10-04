@@ -1,5 +1,6 @@
 import importlib.util
 import json
+import struct
 from pathlib import Path
 import tempfile
 import unittest
@@ -16,6 +17,21 @@ def load(name):
 
 
 class CompatibilityHarnessTests(unittest.TestCase):
+    def test_capture_requires_rendered_pixels_not_only_a_window_header(self):
+        probe = load("probe")
+        with tempfile.TemporaryDirectory() as folder:
+            capture = Path(folder) / "window.xwd"
+            header = [100, 7, 2, 24, 3, 3, 0, 0, 32, 0, 32, 32, 12,
+                      4, 0xff0000, 0xff00, 0xff, 8, 256, 0, 3, 3, 0, 0, 0]
+            prefix = struct.pack(">25I", *header)
+            for color in (0, 0x102030):
+                capture.write_bytes(prefix + struct.pack("<I", color) * 9)
+                self.assertFalse(probe.rendered_capture(capture))
+            capture.write_bytes(prefix + b"".join(struct.pack("<I", n) for n in range(9)))
+            self.assertTrue(probe.rendered_capture(capture))
+            capture.write_bytes(prefix)
+            self.assertFalse(probe.rendered_capture(capture))
+
     def test_supported_matrix_and_repository_root(self):
         matrix = load("matrix")
         self.assertEqual(matrix.ROOT, COMPAT.parents[2])

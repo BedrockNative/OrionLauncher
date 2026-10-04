@@ -1,4 +1,9 @@
 {
+  "FileManager": "Explorador de arquivos",
+  "FileManagerSystem": "Padrão do sistema",
+  "FileManagerNotInstalled": "Não instalado",
+  "FileManagerHint": "Escolha o aplicativo usado para abrir instâncias, com.mojang, conteúdos e logs. Isso não altera o padrão do sistema. Instale os aplicativos ausentes pela sua distribuição.",
+  "FileManagerRefresh": "Atualizar aplicativos instalados",
   "ContentExperimentalTitle": "Gerenciamento de conteúdo · experimental",
   "ContentExperimentalNotice": "O gerenciamento e a importação de texturas, addons e mapas (mundos) são experimentais. Podem causar bugs ou não funcionar corretamente. Faça backup dos seus mundos e conteúdos antes de realizar alterações.",
   "MangoHudIntro": "Overlay de desempenho desta instância. Usa o MangoHud instalado no sistema com o renderizador Vulkan do jogo (DXVK/VKD3D). Nada é instalado automaticamente.",

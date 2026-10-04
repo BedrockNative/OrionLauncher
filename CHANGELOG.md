@@ -1,10 +1,10 @@
 # Changelog
 
-## Unreleased — 1.0.1 draft
+## 1.0.1
 
-Documentation and contribution-policy updates: [English](docs/en_US/changelog/release/v1.0.1.md) ·
+File manager selection, folder-opening fixes, responsive desktop-opacity confirmation,
+changelog filtering and contribution-policy updates: [English](docs/en_US/changelog/release/v1.0.1.md) ·
 [Português (Brasil)](docs/pt_BR/changelog/release/v1.0.1.md).
-This draft does not change the published version or trigger a release.
 
 ## 1.0.0
 
