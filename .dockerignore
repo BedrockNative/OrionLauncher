@@ -1,0 +1,5 @@
+**
+!packaging/
+!packaging/linux/
+!packaging/linux/Dockerfile
+!packaging/linux/install-dependencies.sh

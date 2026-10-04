@@ -1,0 +1,12 @@
+**/bin/
+**/obj/
+**/TestResults/
+artifacts/
+.idea/
+.vs/
+*.user
+*.log
+__pycache__/
+**/curseforge.key
+.env
+.env.*
