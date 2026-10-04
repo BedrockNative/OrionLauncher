@@ -99,6 +99,9 @@ def gui(executable, name, env):
                     capture = REPORT / (name + ".xwd")
                     command("xwd", "-id", match[1], "-silent", "-out", capture)
                     if rendered_capture(capture):
+                        output = (REPORT / (name + ".log")).read_text(errors="replace")
+                        if "Fontconfig warning:" in output or "Fontconfig error:" in output:
+                            raise RuntimeError(f"{name} parsed incompatible Fontconfig configuration")
                         return
                 time.sleep(1)
             raise RuntimeError(f"{name} never showed a rendered main window")

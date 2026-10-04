@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 orion_release_dir="$(realpath -- "${1:?Release directory required}")"
+orion_smoke_scripts="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 cd "$orion_release_dir"
 sha256sum --check SHA256SUMS
 orion_smoke_root="$(mktemp -d -t orion-package-smoke-XXXXXXXX)"
@@ -28,6 +29,7 @@ bundles=("$orion_smoke_root"/OrionLauncher-*)
 orion_app="${bundles[0]}/usr/lib/orion"
 export FONTCONFIG_FILE="${bundles[0]}/etc/fonts/fonts.conf"
 export FONTCONFIG_PATH="${bundles[0]}/etc/fonts"
+python3 "$orion_smoke_scripts/fontconfig-smoke.py" "${bundles[0]}"
 "${bundles[0]}/AppRun" --help
 # Check every ELF (including Wine Unix modules and WebKit helpers), not only the apphost.
 while IFS= read -r -d '' binary; do

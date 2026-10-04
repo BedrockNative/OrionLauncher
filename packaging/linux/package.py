@@ -1,7 +1,7 @@
-"""Ubuntu 24.04 x86_64 portable stack. Verified upstream inputs, recursive ELF closure.
+"""Ubuntu 24.04 x86_64 portable stack. Verified inputs, private ELF dependencies.
 
-glibc and GPU driver interfaces deliberately come from the host. Everything else
-is copied into a private AppDir shared by tar.gz and AppImage; no system installs.
+Core system/desktop libraries come from the host. Application runtimes and their
+remaining dependencies live in a private AppDir shared by tar.gz and AppImage.
 """
 import argparse
 import hashlib
@@ -22,7 +22,79 @@ HERE = Path(__file__).resolve().parent
 # Mesa/GLVND drivers dlopen against the host's Wayland ABI. Bundling Ubuntu's
 # older libwayland shadows newer host symbols (e.g. wl_fixes_interface) and
 # breaks EGL/WebKit on rolling distributions. Keep this driver boundary intact.
-HOST = re.compile(r"^(?:ld-linux.*|lib(?:c|m|mvec|pthread|dl|rt|resolv|util|nss_.*)\.so.*|lib(?:GL|EGL|GLESv2|GLX|GLdispatch|OpenGL|vulkan|gbm|drm.*|wayland-(?:client|server|cursor|egl))\.so.*)$")
+HOST = re.compile(r"^(?:ld-linux.*|lib(?:c|m|mvec|pthread|dl|rt|resolv|util|anl|BrokenLocale|thread_db|nss_.*)\.so.*|lib(?:GL|EGL|GLESv1_CM|GLESv2|GLX|GLdispatch|OpenGL|vulkan|gbm|glapi|drm.*|wayland-(?:client|server|cursor|egl))\.so.*)$")
+# Reviewed desktop baseline, not a list generated from whatever happens to be
+# installed on the build machine. Keep version-sensitive GTK/GLib/WebKit, fonts,
+# ICU, TLS, Kerberos and codecs private. Do not fetch a mutable exclude list at build
+# time. See https://github.com/AppImageCommunity/pkg2appimage/blob/master/excludelist
+HOST_SONAMES = frozenset({
+    # Compiler runtimes and common base-system libraries.
+    "libgcc_s.so.1", "libstdc++.so.6", "libz.so.1",
+    "liblzma.so.5", "libzstd.so.1", "libexpat.so.1", "libuuid.so.1",
+    "libgmp.so.10", "libgpg-error.so.0", "libffi.so.8", "libpcre2-8.so.0",
+    "libmount.so.1", "libblkid.so.1", "libcap.so.2", "libattr.so.1", "libacl.so.1",
+    # Session/device interfaces must follow the host services.
+    "libdbus-1.so.3", "libudev.so.1", "libsystemd.so.0", "libusb-1.0.so.0",
+    "libasound.so.2", "libpulse.so.0", "libpulse-simple.so.0",
+    # X11/XWayland desktop.
+    "libX11.so.6", "libX11-xcb.so.1", "libxcb.so.1", "libXau.so.6",
+    "libXdmcp.so.6", "libICE.so.6", "libSM.so.6", "libXext.so.6",
+    "libXrender.so.1", "libXfixes.so.3", "libXi.so.6", "libXrandr.so.2",
+    "libXcursor.so.1", "libXinerama.so.1", "libXss.so.1", "libXxf86vm.so.1",
+    "libxcb-dri2.so.0", "libxcb-dri3.so.0", "libxcb-glx.so.0",
+    "libxcb-present.so.0", "libxcb-randr.so.0", "libxcb-render.so.0",
+    "libxcb-shm.so.0", "libxcb-sync.so.1", "libxcb-xfixes.so.0",
+})
+# Fontconfig/FreeType/HarfBuzz stay together: rolling host HarfBuzz can interpose
+# symbols in Avalonia's libHarfBuzzSharp and abort in hb_font_create/free().
+# Ubuntu's libbz2.so.1.0 also stays private: Fedora ships a different SONAME.
+
+# dlopen/PInvoke dependencies cannot be discovered from DT_NEEDED alone.
+DLOPEN_ROOTS = [
+    "libX11.so.6", "libICE.so.6", "libSM.so.6", "libXi.so.6", "libXrandr.so.2",
+    "libXcursor.so.1", "libfontconfig.so.1", "libicuuc.so.74", "libicui18n.so.74",
+    "libssl.so.3", "libcrypto.so.3", "libgssapi_krb5.so.2", "libasound.so.2",
+    "libpulse.so.0", "libudev.so.1", "libusb-1.0.so.0", "libgnutls.so.30",
+    "libgcrypt.so.20", "libunwind.so.8", "libv4l2.so.0", "libSDL2-2.0.so.0",
+    "libpcap.so.0.8", "libpcsclite.so.1", "libxkbregistry.so.0",
+    "libOSMesa.so.8", "libsecret-1.so.0",
+]
+
+
+def host_library(name):
+    return name in HOST_SONAMES or bool(HOST.fullmatch(name))
+
+
+def dynamic_entries(path):
+    output = run("readelf", "-d", path, capture_output=True, text=True).stdout
+    needed = re.findall(r"\(NEEDED\).*\[([^\]]+)\]", output)
+    soname = re.search(r"\(SONAME\).*\[([^\]]+)\]", output)
+    return needed, soname[1] if soname else ""
+
+
+def remove_host_libraries(appdir):
+    # Upstream runtime archives and published assets can already contain core
+    # libraries. Remove their real files AND aliases before resolving anything,
+    # so ldd cannot accidentally resolve against a copy that will later disappear.
+    files = list(appdir.rglob("*"))
+    removed = set()
+    host_names = set()
+    for path in files:
+        if not elf(path):
+            continue
+        _, soname = dynamic_entries(path)
+        if host_library(path.name) or host_library(soname):
+            removed.add(path.resolve())
+            host_names.add(soname or path.name)
+    aliases = [p for p in files if p.is_symlink() and
+               (host_library(p.name) or p.resolve() in removed)]
+    for path in aliases:
+        if host_library(path.name):
+            host_names.add(path.name)
+        path.unlink()
+    for path in removed:
+        path.unlink()
+    return host_names
 
 
 def run(*args, **kwargs):
@@ -58,6 +130,20 @@ def copy_tree(source, destination):
     else:
         destination.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(source, destination)
+
+
+def relocate_fontconfig(appdir):
+    # Fontconfig 2.15 scans FC_TEMPLATEDIR even with FONTCONFIG_FILE/PATH set
+    # (FcInitLoadOwnConfig in src/fcinit.c). Host templates may use newer syntax.
+    # A relative name is resolved through FONTCONFIG_PATH, which AppRun sets.
+    library = (appdir / "usr/lib/orion/native/libfontconfig.so.1").resolve(strict=True)
+    original = b"/usr/share/fontconfig/conf.avail\0"
+    replacement = b"conf.avail\0".ljust(len(original), b"\0")
+    data = library.read_bytes()
+    if data.count(original) != 1:
+        raise ValueError("Fontconfig template path changed; review portable relocation before packaging.")
+    copy_tree(appdir / "usr/share/fontconfig/conf.avail", appdir / "etc/fonts/conf.avail")
+    library.write_bytes(data.replace(original, replacement))
 
 
 def bundle_wine_addons(app, lock, cache):
@@ -147,21 +233,16 @@ def build_ffmpeg(item, cache, work, app):
 def bundle_native(appdir, app):
     native = app / "native"
     native.mkdir(exist_ok=True)
-    # dlopen/PInvoke dependencies cannot be discovered from DT_NEEDED alone.
-    roots = ["libX11.so.6", "libICE.so.6", "libSM.so.6", "libXi.so.6", "libXrandr.so.2",
-             "libXcursor.so.1", "libfontconfig.so.1", "libicuuc.so.74", "libicui18n.so.74",
-             "libssl.so.3", "libcrypto.so.3", "libgssapi_krb5.so.2", "libasound.so.2",
-             "libpulse.so.0", "libudev.so.1", "libusb-1.0.so.0", "libgnutls.so.30",
-             "libgcrypt.so.20", "libunwind.so.8", "libv4l2.so.0", "libSDL2-2.0.so.0",
-             "libpcap.so.0.8", "libpcsclite.so.1", "libxkbregistry.so.0",
-             "libOSMesa.so.8", "libsecret-1.so.0"]
+    host_names = remove_host_libraries(appdir)
     cache = run("ldconfig", "-p", capture_output=True, text=True).stdout
     paths = {}
     for line in cache.splitlines():
         match = re.search(r"^\s*(\S+) .*x86-64.* => (\S+)$", line)
         if match:
             paths.setdefault(match[1], Path(match[2]))
-    pending = [paths[name] for name in roots]  # Missing required libraries fail the build.
+    host_names.update(name for name in DLOPEN_ROOTS if host_library(name))
+    # Only private dlopen roots need to exist in the build's ldconfig cache.
+    pending = [paths[name] for name in DLOPEN_ROOTS if not host_library(name)]
     pending += [p for p in appdir.rglob("*") if elf(p)]
     seen = set()
     owned_packages = set()
@@ -171,11 +252,14 @@ def bundle_native(appdir, app):
         if source in seen:
             continue
         seen.add(source)
+        needed, soname = dynamic_entries(source)
+        if host_library(source.name) or host_library(soname):
+            host_names.add(soname or source.name)
+            continue
         if not source.is_relative_to(appdir):
             target = native / source.name
             copy_tree(source, target)
             # Preserve all loader names, including SONAME vs on-disk filename.
-            soname = run("patchelf", "--print-soname", source, capture_output=True, text=True).stdout.strip()
             if soname and soname != target.name and not (native / soname).exists():
                 (native / soname).symlink_to(target.name)
             owner = subprocess.run(["dpkg-query", "-S", str(source)], capture_output=True, text=True)
@@ -188,10 +272,21 @@ def bundle_native(appdir, app):
             raise RuntimeError(f"Unresolved dependencies in {source}:\n{output}")
         if result.returncode and "statically linked" not in output and "not a dynamic executable" not in output:
             raise RuntimeError(output)
+        resolved = {}
         for line in output.splitlines():
             match = re.search(r"^\s*(\S+) => (/\S+) ", line)
-            if match and not HOST.fullmatch(match[1]):
-                pending.append(Path(match[2]))
+            if match:
+                resolved[match[1]] = Path(match[2])
+        # ldd prints the entire transitive tree, including dependencies used only
+        # by host libraries. Follow DT_NEEDED edges ourselves and stop at the
+        # host boundary instead of copying that unrelated system stack.
+        for name in needed:
+            if host_library(name):
+                host_names.add(name)
+            elif name in resolved:
+                pending.append(resolved[name])
+            else:
+                raise RuntimeError(f"Could not resolve {name} required by {source}")
     # Wine runtime updates use the upstream libpcap name rather than Debian's
     # historical SONAME for this same 1.x API.
     (native / "libpcap.so.1").symlink_to("libpcap.so.0.8")
@@ -207,8 +302,9 @@ def bundle_native(appdir, app):
         # RUNPATH deliberately permits the private relocated WebKit library to
         # take precedence through the owned child's LD_LIBRARY_PATH.
         run("patchelf", "--set-rpath", ":".join(filter(None, ["$ORIGIN", relative, old])), path)
-    return run("dpkg-query", "-W", "-f=${Package}=${Version}\n", *sorted(owned_packages),
-               capture_output=True, text=True).stdout.splitlines()
+    packages = run("dpkg-query", "-W", "-f=${Package}=${Version}\n", *sorted(owned_packages),
+                   capture_output=True, text=True).stdout.splitlines() if owned_packages else []
+    return packages, sorted(host_names)
 
 
 def build(published, output):
@@ -252,8 +348,7 @@ def build(published, output):
                      "usr/lib/x86_64-linux-gnu/gstreamer1.0",
                      "usr/lib/x86_64-linux-gnu/gdk-pixbuf-2.0",
                      "usr/lib/x86_64-linux-gnu/gtk-3.0",
-                     "usr/lib/x86_64-linux-gnu/alsa-lib",
-                     "usr/share/glib-2.0/schemas", "usr/share/mime", "usr/share/alsa",
+                     "usr/share/glib-2.0/schemas", "usr/share/mime",
                      "usr/share/fonts/truetype/dejavu", "usr/share/fontconfig", "etc/fonts",
                      "usr/share/icons/Adwaita", "usr/share/icons/hicolor",
                      "etc/ssl/certs/ca-certificates.crt", "usr/bin/xdg-open", "usr/bin/xdg-mime",
@@ -270,7 +365,8 @@ def build(published, output):
 <dir>/usr/share/fonts</dir><dir>/usr/local/share/fonts</dir><dir prefix="xdg">fonts</dir>
 <cachedir prefix="xdg">fontconfig</cachedir><include ignore_missing="yes">conf.d</include></fontconfig>
 ''')
-        packages = bundle_native(appdir, app)
+        packages, host_libraries = bundle_native(appdir, app)
+        relocate_fontconfig(appdir)
         # bundle_native adds RUNPATH after rebuilding; record the final ELF hash.
         for manifest_path in (app / "runtimes/winegdk").glob("*/share/wine/native/dxvk-nvapi/MANIFEST.json"):
             manifest = json.loads(manifest_path.read_text())
@@ -291,7 +387,7 @@ def build(published, output):
         manifest = {**identity, "notes": f"docs/en_US/changelog/release/v{version}.md",
                     "commit": os.environ.get("GITHUB_SHA", "local"), "architecture": "x86_64",
                     "baseline": "Ubuntu 24.04 / glibc 2.39", "stack": lock,
-                    "nativePackages": packages}
+                    "nativePackages": packages, "hostLibraries": host_libraries}
         manifest["excludedOptionalComponents"] = ["Legacy LTTng 2.12 tracepoint provider"]
         (output / "build-manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
         copy_tree(output / "build-manifest.json", appdir / "build-manifest.json")
