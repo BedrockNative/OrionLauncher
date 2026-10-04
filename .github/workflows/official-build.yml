@@ -1,0 +1,107 @@
+name: Release Linux
+run-name: Release Linux · ${{ inputs.version || 'RELEASE_VERSION' }}
+on:
+  push:
+    branches: [main]
+    paths: [RELEASE_VERSION]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version (e.g. 1.0.0 or 1.1.0-rc.1); must match RELEASE_VERSION'
+        required: true
+        type: string
+permissions:
+  contents: read
+concurrency:
+  group: official-release
+  cancel-in-progress: false
+jobs:
+  build:
+    if: github.repository == 'BedrockNative/OrionLauncher' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    environment: curseforge-release
+    timeout-minutes: 60
+    outputs:
+      version: ${{ steps.release.outputs.version }}
+      tag: ${{ steps.release.outputs.tag }}
+      prerelease: ${{ steps.release.outputs.prerelease }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - name: Validate version and release notes
+        id: release
+        env:
+          REQUESTED_VERSION: ${{ inputs.version }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 packaging/release.py --github-output "$GITHUB_OUTPUT"
+          python3 packaging/check-release-available.py
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4
+        with:
+          dotnet-version: '10.0.x'
+      - name: Install packaging and native dependencies
+        run: sudo bash packaging/linux/install-dependencies.sh
+      - name: Validate without credentials
+        run: |
+          python3 -m unittest discover -s packaging/tests -v
+          dotnet restore OrionLauncher.slnx
+          dotnet test OrionLauncher.slnx -c Release --no-restore -m:1
+          dotnet build tools/Orion.BuildCredentials -c Release
+      - name: Generate obfuscated credential resource
+        env:
+          CURSEFORGE_API_KEY: ${{ secrets.CURSEFORGE_API_KEY }}
+        run: dotnet tools/Orion.BuildCredentials/bin/Release/net10.0/Orion.BuildCredentials.dll src/Orion.Infrastructure/obj/curseforge.key
+      - name: Publish (no secret in environment or MSBuild arguments)
+        env:
+          RELEASE_VERSION: ${{ steps.release.outputs.version }}
+        run: |
+          dotnet publish src/Orion.Desktop -c Release -r linux-x64 --self-contained true -m:1 \
+            -p:Version="$RELEASE_VERSION" -p:DebugType=None -p:DebugSymbols=false -o artifacts/publish
+          strings artifacts/publish/Orion.Infrastructure.dll | grep -x 'Orion.CurseForge.Credential'
+      - name: Remove generated credential resource
+        if: always()
+        run: |
+          if [ -f src/Orion.Infrastructure/obj/curseforge.key ]; then
+            unlink src/Orion.Infrastructure/obj/curseforge.key
+          fi
+      - name: Bundle stack and create AppImage and tar.gz
+        run: python3 packaging/linux/package.py artifacts/publish artifacts/release
+      - name: Verify portable packages
+        run: bash packaging/linux/smoke-test.sh artifacts/release
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: release-linux-x64
+          path: artifacts/release/*
+          if-no-files-found: error
+          retention-days: 7
+  publish:
+    needs: build
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: release-linux-x64
+          path: release
+      - name: Create tag and release on the exact tested commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ needs.build.outputs.tag }}
+          RELEASE_VERSION: ${{ needs.build.outputs.version }}
+          PRERELEASE: ${{ needs.build.outputs.prerelease }}
+        run: |
+          set -euo pipefail
+          python3 packaging/check-release-available.py
+          cd release
+          sha256sum --check SHA256SUMS
+          flags=()
+          if [ "$PRERELEASE" = true ]; then flags+=(--prerelease); fi
+          gh release create "$RELEASE_TAG" --target "$GITHUB_SHA" \
+            --title "Orion Launcher $RELEASE_VERSION" --notes-file release-notes.md \
+            "${flags[@]}" ./*.AppImage ./*.tar.gz SHA256SUMS build-manifest.json

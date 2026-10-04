@@ -1,0 +1,53 @@
+#!/usr/bin/env bash
+set -euo pipefail
+orion_bundle_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
+orion_app="$orion_bundle_root/usr/lib/orion"
+# Libraries use relative ELF RPATHs; never poison the desktop's LD_LIBRARY_PATH.
+orion_webkit="$orion_bundle_root/usr/lib/x86_64-linux-gnu/webkit2gtk-4.1"
+export WEBKIT_INJECTED_BUNDLE_PATH="$orion_webkit/injected-bundle"
+export GIO_EXTRA_MODULES="$orion_bundle_root/usr/lib/x86_64-linux-gnu/gio/modules"
+export GST_PLUGIN_SYSTEM_PATH_1_0="$orion_bundle_root/usr/lib/x86_64-linux-gnu/gstreamer-1.0"
+export GST_PLUGIN_SCANNER_1_0="$orion_bundle_root/usr/lib/x86_64-linux-gnu/gstreamer1.0/gstreamer-1.0/gst-plugin-scanner"
+export XDG_DATA_DIRS="$orion_bundle_root/usr/share:${XDG_DATA_DIRS:-/usr/local/share:/usr/share}"
+export FONTCONFIG_FILE="$orion_bundle_root/etc/fonts/fonts.conf"
+export FONTCONFIG_PATH="$orion_bundle_root/etc/fonts"
+export GTK_PATH="$orion_bundle_root/usr/lib/x86_64-linux-gnu/gtk-3.0"
+export PATH="$PATH:$orion_bundle_root/usr/bin"
+# GTK's loader cache contains absolute build-machine paths. Regenerate it for
+# the current AppImage mount/portable location without writing to the package.
+orion_pixbuf="$orion_bundle_root/usr/lib/x86_64-linux-gnu/gdk-pixbuf-2.0"
+export GDK_PIXBUF_MODULEDIR="$orion_pixbuf/2.10.0/loaders"
+orion_cache="${XDG_CACHE_HOME:-${HOME:?}/.cache}/orion-launcher/packaging"
+mkdir -p -- "$orion_cache"
+orion_loader_cache="$(mktemp "$orion_cache/pixbuf-XXXXXXXX")"
+"$orion_pixbuf/gdk-pixbuf-query-loaders" > "$orion_loader_cache"
+export GDK_PIXBUF_MODULE_FILE="$orion_loader_cache"
+# Keep a shell solely to clean up the per-process loader cache on exit.
+orion_webkit_private=''
+cleanup() {
+  unlink -- "$orion_loader_cache"
+  if [[ -n "$orion_webkit_private" ]]; then
+    # This exact mode-0700 directory was created by this invocation, never a
+    # caller-supplied path. Only remove its known generated files and links.
+    rm -f -- "$orion_webkit_private/libwebkit2gtk-4.1.so.0" "$orion_webkit_private/w" "$orion_webkit_private/b" "$orion_webkit_private/d"
+    rmdir -- "$orion_webkit_private"
+  fi
+}
+trap cleanup EXIT
+if [[ -z "${ORION_WEBKIT_LIBRARY_DIR:-}" || ! -r "$ORION_WEBKIT_LIBRARY_DIR/libwebkit2gtk-4.1.so.0" || "$(readlink -- "$ORION_WEBKIT_LIBRARY_DIR/w")" != "$orion_webkit" ]]; then
+  orion_webkit_private="$(mktemp -d /tmp/oXXXXXX)"
+  ln -s -- "$orion_webkit" "$orion_webkit_private/w"
+  ln -s -- "$orion_bundle_root/usr/bin/bwrap" "$orion_webkit_private/b"
+  ln -s -- "$orion_bundle_root/usr/bin/xdg-dbus-proxy" "$orion_webkit_private/d"
+  "$orion_bundle_root/usr/bin/orion-relocate-webkit" "$orion_app/native/libwebkit2gtk-4.1.so.0" "$orion_webkit_private"
+  export ORION_WEBKIT_LIBRARY_DIR="$orion_webkit_private"
+fi
+# Keep the host trust store when available (corporate/private CAs remain valid).
+if [[ ! -f /etc/ssl/certs/ca-certificates.crt && ! -f /etc/pki/tls/certs/ca-bundle.crt ]]; then
+  export SSL_CERT_FILE="$orion_bundle_root/etc/ssl/certs/ca-certificates.crt"
+fi
+if [[ "${ORION_PACKAGING_VERIFY_WEBKIT:-0}" == 1 ]]; then
+  LD_LIBRARY_PATH="$ORION_WEBKIT_LIBRARY_DIR:$orion_app/native" "$orion_bundle_root/usr/bin/orion-webkit-smoke"
+else
+  "$orion_app/OrionLauncher" "$@"
+fi

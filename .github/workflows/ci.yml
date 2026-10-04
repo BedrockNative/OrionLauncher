@@ -1,0 +1,23 @@
+name: Build and test
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  linux:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4
+        with:
+          dotnet-version: '10.0.x'
+      - run: sudo apt-get update && sudo apt-get install -y cmake g++-mingw-w64-x86-64
+      - run: dotnet restore OrionLauncher.slnx
+      - run: dotnet build OrionLauncher.slnx -c Release --no-restore
+      - run: dotnet test OrionLauncher.slnx -c Release --no-build --logger trx
+      - run: python3 -m unittest discover -s packaging/tests -v

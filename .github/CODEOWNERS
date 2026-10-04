@@ -1,0 +1,7 @@
+# Require code-owner review through branch protection before enabling official builds.
+/.github/ @yPerfectBR @raonygamer
+/tools/ @yPerfectBR @raonygamer
+/packaging/ @yPerfectBR @raonygamer
+/RELEASE_VERSION @yPerfectBR @raonygamer
+/src/Orion.Infrastructure/CurseForge/ @yPerfectBR @raonygamer
+/src/Orion.Infrastructure/Orion.Infrastructure.csproj @yPerfectBR @raonygamer

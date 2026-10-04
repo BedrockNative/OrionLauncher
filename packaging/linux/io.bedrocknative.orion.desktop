@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=Orion Launcher
+Comment=Minecraft Bedrock launcher for Linux
+Exec=OrionLauncher
+Icon=io.bedrocknative.orion
+Terminal=false
+Categories=Game;
+StartupNotify=true
