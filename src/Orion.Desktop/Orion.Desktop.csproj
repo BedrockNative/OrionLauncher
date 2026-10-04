@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <AssemblyName>OrionLauncher</AssemblyName>
+    <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../Orion.Infrastructure/Orion.Infrastructure.csproj" />
+    <PackageReference Include="Avalonia.Desktop" Version="11.3.12" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.12" />
+    <PackageReference Include="Avalonia.Fonts.Inter" Version="11.3.12" />
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
+    <PackageReference Include="Tmds.DBus.Protocol" Version="0.21.3" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="I18n/*.json" />
+    <EmbeddedResource Include="../../docs/en_US/changelog/release/v*.md">
+      <LogicalName>Changelog.release/en_US/%(Filename)%(Extension)</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="../../docs/pt_BR/changelog/release/v*.md">
+      <LogicalName>Changelog.release/pt_BR/%(Filename)%(Extension)</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="../../docs/en_US/changelog/legacy/**/*.md">
+      <LogicalName>Changelog.legacy/%(RecursiveDir)%(Filename)%(Extension)</LogicalName>
+    </EmbeddedResource>
+    <None Include="Assets/orion.svg" CopyToOutputDirectory="PreserveNewest" />
+    <AvaloniaResource Include="Assets/orion.png" />
+    <AvaloniaResource Include="Assets/Maintainers/*.png" />
+    <SupportedPlatform Include="linux" />
+  </ItemGroup>
+  <Import Project="../Orion.Native/Orion.Native.targets" />
+</Project>

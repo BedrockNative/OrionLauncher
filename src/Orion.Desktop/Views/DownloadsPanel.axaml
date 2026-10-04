@@ -1,0 +1,31 @@
+<UserControl xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Orion.Desktop.ViewModels" x:Class="Orion.Desktop.Views.DownloadsPanel" x:DataType="vm:MainViewModel">
+  <Grid RowDefinitions="Auto,*">
+    <StackPanel Spacing="8" Margin="0,0,0,26">
+      <TextBlock Text="{Binding Text[Downloads]}" Classes="heading" />
+      <TextBlock Text="{Binding Text[DownloadsHint]}" Classes="muted" TextWrapping="Wrap" />
+    </StackPanel>
+    <ScrollViewer Grid.Row="1">
+      <ItemsControl ItemsSource="{Binding Downloads}">
+        <ItemsControl.ItemTemplate>
+          <DataTemplate x:DataType="vm:DownloadItemViewModel">
+            <Border Classes="panel" Margin="0,0,0,16">
+              <Grid RowDefinitions="Auto,Auto,Auto,Auto" ColumnDefinitions="*,Auto">
+                <StackPanel Spacing="6"><TextBlock Text="{Binding Name}" FontSize="20" FontWeight="SemiBold" /><TextBlock Text="{Binding Version}" Classes="muted" /></StackPanel>
+                <TextBlock Grid.Column="1" Text="{Binding Status}" Foreground="{DynamicResource OrionAccentBrush}" VerticalAlignment="Center" Margin="16,0,0,0" />
+                <ProgressBar Grid.Row="1" Grid.ColumnSpan="2" Height="4" Margin="0,18,0,12" Value="{Binding Progress}" IsIndeterminate="{Binding Indeterminate}" Foreground="{DynamicResource OrionAccentBrush}" />
+                <TextBlock Grid.Row="2" Grid.ColumnSpan="2" Text="{Binding Message}" Classes="muted" TextWrapping="Wrap" />
+                <StackPanel Grid.Row="3" Grid.ColumnSpan="2" Orientation="Horizontal" Spacing="10" Margin="0,16,0,0">
+                  <Button Content="{Binding Text[InstanceLog]}" Command="{Binding LogsCommand}" Classes="subtle" />
+                  <Button Content="{Binding Text[Retry]}" Command="{Binding RetryCommand}" IsVisible="{Binding CanRetry}" />
+                  <Button Content="{Binding Text[Cancel]}" Command="{Binding CancelCommand}" IsVisible="{Binding CanCancel}" />
+                </StackPanel>
+              </Grid>
+            </Border>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+    </ScrollViewer>
+    <TextBlock Grid.Row="1" Text="{Binding Text[DownloadsEmpty]}" IsVisible="{Binding DownloadsEmpty}" Classes="muted" VerticalAlignment="Top" Margin="0,20" />
+  </Grid>
+</UserControl>

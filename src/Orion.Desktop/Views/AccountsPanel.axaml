@@ -1,0 +1,44 @@
+<UserControl xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Orion.Desktop.ViewModels" xmlns:views="using:Orion.Desktop.Views" x:Class="Orion.Desktop.Views.AccountsPanel" x:DataType="vm:MainViewModel">
+  <ScrollViewer HorizontalScrollBarVisibility="Disabled">
+    <StackPanel Spacing="20">
+      <TextBlock Text="{Binding Text[AccountTitle]}" Classes="heading" />
+      <Border Classes="panel">
+        <StackPanel Spacing="16">
+          <TextBlock Text="MICROSOFT / XBOX" Foreground="{DynamicResource OrionAccentBrush}" FontSize="12" LetterSpacing="2" />
+          <TextBlock Text="{Binding AccountStatus}" FontSize="18" FontWeight="SemiBold" TextWrapping="Wrap" IsVisible="{Binding !CurrentProfile.HasAccount}" />
+          <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10" IsVisible="{Binding CurrentProfile.HasAccount}">
+            <TextBlock Text="{Binding Text[ActiveAccount]}" FontSize="18" />
+            <TextBlock Grid.Column="1" Text="{Binding CurrentProfile.DisplayName}" FontSize="18" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding CurrentProfile.DisplayName}" />
+          </Grid>
+          <TextBlock Text="{Binding Text[AccountsHint]}" Classes="muted" TextWrapping="Wrap" LineHeight="23" MaxWidth="680" HorizontalAlignment="Left" />
+          <WrapPanel>
+            <Button Classes="primary" Content="{Binding Text[AddAccount]}" Command="{Binding LoginCommand}" IsEnabled="{Binding IsIdle}" Margin="0,0,10,0" />
+            <Button Content="{Binding Text[RefreshAccounts]}" Command="{Binding RefreshAccountsCommand}" IsEnabled="{Binding IsIdle}" />
+          </WrapPanel>
+        </StackPanel>
+      </Border>
+      <ItemsControl ItemsSource="{Binding Accounts}" IsEnabled="{Binding IsIdle}">
+        <ItemsControl.ItemTemplate>
+          <DataTemplate x:DataType="vm:AccountCardViewModel">
+            <Border Classes="panel" Padding="18" Margin="0,0,0,12">
+              <Grid ColumnDefinitions="Auto,*,Auto" RowDefinitions="Auto,Auto">
+                <views:ProfileAvatar DataContext="{Binding Profile}" Width="46" Height="46" Margin="0,0,16,0" VerticalAlignment="Top" />
+                <StackPanel Grid.Column="1" Spacing="4" VerticalAlignment="Center">
+                  <TextBlock Text="{Binding Profile.DisplayName}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding Profile.DisplayName}" />
+                  <TextBlock Text="{Binding Username}" Classes="muted" FontSize="12" IsVisible="{Binding Profile.HasGamertag}" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding Username}" />
+                  <TextBlock Text="{Binding Owner.Text[ActiveAccount]}" Foreground="{DynamicResource OrionAccentBrush}" FontSize="12" IsVisible="{Binding Active}" />
+                  <TextBlock Text="{Binding Owner.Text[SavedAccount]}" Classes="muted" FontSize="12" IsVisible="{Binding !Active}" />
+                </StackPanel>
+                <StackPanel Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" Orientation="Horizontal" Spacing="10" Margin="0,12,0,0">
+                  <Button Content="{Binding Owner.Text[UseAccount]}" Command="{Binding SelectCommand}" IsVisible="{Binding !Active}" />
+                  <Button Classes="subtle" Content="{Binding Owner.Text[RemoveAccount]}" Command="{Binding RemoveCommand}" />
+                </StackPanel>
+              </Grid>
+            </Border>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

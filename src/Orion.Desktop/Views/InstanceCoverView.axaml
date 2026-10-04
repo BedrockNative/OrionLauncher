@@ -1,0 +1,18 @@
+<UserControl xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:views="using:Orion.Desktop.Views" x:Class="Orion.Desktop.Views.InstanceCoverView"
+             x:Name="Root" x:DataType="views:InstanceCoverView">
+  <UserControl.Styles>
+    <Style Selector="TextBlock.channelCaption"><Setter Property="Foreground" Value="{DynamicResource OrionAccentBrush}" /></Style>
+  </UserControl.Styles>
+  <Grid Height="112" Background="{DynamicResource OrionAccentSurfaceBrush}" ClipToBounds="True">
+    <Image x:Name="Picture" Stretch="UniformToFill" />
+    <Grid x:Name="MonogramPanel" ColumnDefinitions="*,Auto" Margin="20">
+      <TextBlock Text="{Binding #Root.Initial}" FontSize="48" FontWeight="Bold" Foreground="{DynamicResource OrionAccentBrush}" Opacity="0.8" />
+      <TextBlock Grid.Column="1" Text="✧" FontSize="44" Foreground="{DynamicResource OrionAccentBrush}" Opacity="0.5" />
+    </Grid>
+    <Border x:Name="ChannelBadge" Background="Transparent" HorizontalAlignment="Left" VerticalAlignment="Bottom" CornerRadius="4" Margin="14,0,14,12" Padding="6,3">
+      <TextBlock x:Name="ChannelText" Classes="channelCaption" Text="{Binding #Root.Channel}" FontSize="10" LetterSpacing="2" />
+    </Border>
+    <TextBlock x:Name="LoadStatus" IsVisible="False" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="10" Background="#C010151E" Foreground="#EBF0F7" FontSize="11" Padding="4" />
+  </Grid>
+</UserControl>

@@ -1,0 +1,104 @@
+<UserControl xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Orion.Desktop.ViewModels" x:Class="Orion.Desktop.Views.AdvancedAppearancePanel" x:DataType="vm:AdvancedAppearanceViewModel">
+  <StackPanel Spacing="22">
+    <Border Classes="panel">
+      <StackPanel Spacing="12">
+        <TextBlock Text="{Binding Text[DesktopTransparency]}" FontSize="18" FontWeight="SemiBold" />
+        <CheckBox x:Name="DesktopOpacityToggle" Content="{Binding Text[KeepWindowOpaque]}" IsChecked="{Binding KeepWindowOpaque, Mode=OneWay}" Click="ChangeDesktopOpacity" />
+        <TextBlock Text="{Binding Text[KeepWindowOpaqueHint]}" Classes="muted" TextWrapping="Wrap" FontSize="12" />
+        <TextBlock Text="{Binding DesktopOpacityStatus}" Classes="muted" TextWrapping="Wrap" FontSize="12" />
+        <StackPanel Orientation="Horizontal" Spacing="8">
+          <TextBlock Text="{Binding Text[DetectedDesktop]}" Classes="muted" />
+          <TextBlock Text="{Binding DesktopEnvironmentName}" />
+        </StackPanel>
+        <Expander Header="{Binding Text[DesktopOpacityHelp]}" HorizontalAlignment="Stretch">
+          <StackPanel Spacing="12" Margin="0,12,0,0">
+            <TextBlock Text="{Binding Text[DesktopOpacityLimit]}" Classes="muted" TextWrapping="Wrap" />
+            <SelectableTextBlock Text="{Binding DesktopOpacityGuide}" TextWrapping="Wrap" />
+            <Button Content="{Binding Text[CopyDesktopRule]}" Click="CopyDesktopRule" HorizontalAlignment="Left" />
+          </StackPanel>
+        </Expander>
+      </StackPanel>
+    </Border>
+    <Border Classes="panel">
+      <StackPanel Spacing="14">
+        <TextBlock Text="{Binding Text[AppearanceLayout]}" FontSize="18" FontWeight="SemiBold" />
+        <CheckBox Content="{Binding Text[TopNavigation]}" IsChecked="{Binding TopNavigation}" />
+        <CheckBox Content="{Binding Text[ReduceMotion]}" IsChecked="{Binding ReduceMotion}" />
+      </StackPanel>
+    </Border>
+    <Border Classes="panel">
+      <StackPanel Spacing="14">
+        <TextBlock Text="{Binding Text[ModeCustomization]}" FontSize="18" FontWeight="SemiBold" />
+        <TextBlock Text="{Binding Text[ModeCustomizationHint]}" Classes="muted" TextWrapping="Wrap" />
+        <ToggleSwitch OffContent="{Binding Text[EditingDark]}" OnContent="{Binding Text[EditingLight]}" IsChecked="{Binding EditLight}" />
+        <StackPanel DataContext="{Binding Profile}" x:DataType="vm:AppearanceProfileViewModel" Spacing="14">
+          <TextBlock Text="{Binding Text[ThemePalette]}" FontWeight="SemiBold" />
+          <ComboBox ItemsSource="{Binding Accents}" SelectedIndex="{Binding AccentIndex}" HorizontalAlignment="Stretch" MaxDropDownHeight="360" AutomationProperties.Name="{Binding Text[ThemePalette]}">
+            <ComboBox.ItemTemplate><DataTemplate x:DataType="vm:ThemeOptionViewModel"><StackPanel Orientation="Horizontal" Spacing="12"><Ellipse Width="18" Height="18" Fill="{Binding Swatch}" /><TextBlock Text="{Binding Label}" /></StackPanel></DataTemplate></ComboBox.ItemTemplate>
+          </ComboBox>
+          <TextBox IsVisible="{Binding IsCustom}" Text="{Binding CustomAccent}" Watermark="#RRGGBB" MaxLength="7" AutomationProperties.Name="{Binding Text[CustomColor]}" />
+          <TextBlock Text="{Binding Text[BaseTint]}" FontWeight="SemiBold" />
+          <ComboBox x:Name="BackgroundBasePicker" ItemsSource="{Binding Bases}" SelectedIndex="{Binding BaseIndex}" HorizontalAlignment="Stretch" AutomationProperties.Name="{Binding Text[BaseTint]}">
+            <ComboBox.ItemTemplate><DataTemplate x:DataType="vm:ThemeOptionViewModel"><TextBlock Text="{Binding Label}" TextTrimming="CharacterEllipsis" /></DataTemplate></ComboBox.ItemTemplate>
+          </ComboBox>
+          <TextBox IsVisible="{Binding IsCustomBase}" Text="{Binding BaseColor}" Watermark="#RRGGBB" MaxLength="7" AutomationProperties.Name="{Binding Text[BaseTint]}" />
+          <TextBlock IsVisible="{Binding !ColorsValid}" Text="{Binding Text[InvalidHex]}" Foreground="{DynamicResource OrionErrorTextBrush}" />
+          <Grid ColumnDefinitions="*,60"><TextBlock Text="{Binding Text[BaseOpacity]}" /><TextBlock Grid.Column="1" Text="{Binding BaseOpacity, StringFormat={}{0:0}%}" HorizontalAlignment="Right" /></Grid>
+          <Slider Minimum="0" Maximum="100" Value="{Binding BaseOpacity}" IsEnabled="{Binding IsTintedBase}" AutomationProperties.Name="{Binding Text[BaseOpacity]}" />
+          <Expander Header="{Binding Text[Material]}" HorizontalAlignment="Stretch">
+            <StackPanel Spacing="12" Margin="0,12,0,0">
+              <WrapPanel>
+                <Button Content="{Binding Text[MaterialBalanced]}" Command="{Binding MaterialCommand}" CommandParameter="balanced" Margin="0,0,8,8" />
+                <Button Content="{Binding Text[MaterialClear]}" Command="{Binding MaterialCommand}" CommandParameter="clear" Margin="0,0,8,8" />
+                <Button Content="{Binding Text[MaterialSolid]}" Command="{Binding MaterialCommand}" CommandParameter="solid" Margin="0,0,8,8" />
+              </WrapPanel>
+              <Grid ColumnDefinitions="*,60"><TextBlock Text="{Binding Text[SurfaceOpacity]}" /><TextBlock Grid.Column="1" Text="{Binding SurfaceOpacity, StringFormat={}{0:0}%}" HorizontalAlignment="Right" /></Grid>
+              <Slider Minimum="0" Maximum="100" Value="{Binding SurfaceOpacity}" AutomationProperties.Name="{Binding Text[SurfaceOpacity]}" />
+              <Grid ColumnDefinitions="*,60"><TextBlock Text="{Binding Text[SurfaceBlur]}" /><TextBlock Grid.Column="1" Text="{Binding SurfaceBlur, StringFormat={}{0:0} px}" HorizontalAlignment="Right" /></Grid>
+              <Slider Minimum="0" Maximum="32" Value="{Binding SurfaceBlur}" AutomationProperties.Name="{Binding Text[SurfaceBlur]}" />
+              <Grid ColumnDefinitions="*,60"><TextBlock Text="{Binding Text[WallpaperOverlay]}" /><TextBlock Grid.Column="1" Text="{Binding OverlayOpacity, StringFormat={}{0:0}%}" HorizontalAlignment="Right" /></Grid>
+              <Slider Minimum="0" Maximum="80" Value="{Binding OverlayOpacity}" AutomationProperties.Name="{Binding Text[WallpaperOverlay]}" />
+              <CheckBox Content="{Binding Text[ProtectReadability]}" IsChecked="{Binding ProtectReadability}" />
+              <TextBlock Text="{Binding Text[MaterialHint]}" Classes="muted" TextWrapping="Wrap" FontSize="12" />
+            </StackPanel>
+          </Expander>
+        </StackPanel>
+      </StackPanel>
+    </Border>
+    <Border Classes="panel">
+      <StackPanel Spacing="14">
+        <TextBlock Text="{Binding Text[Wallpaper]}" FontSize="18" FontWeight="SemiBold" />
+        <TextBlock Text="{Binding Text[WallpaperHint]}" Classes="muted" FontSize="12" TextWrapping="Wrap" />
+        <TextBlock Text="{Binding WallpaperDirectory}" TextWrapping="Wrap" />
+        <TextBlock Text="{Binding WallpaperFile}" TextWrapping="Wrap" />
+        <TextBlock Text="{Binding WallpaperStatus}" Classes="muted" TextWrapping="Wrap" />
+        <WrapPanel>
+          <Button Content="{Binding Text[ChooseWallpaperFile]}" Click="ChooseImage" Margin="0,0,8,8" />
+          <Button Content="{Binding Text[ChooseWallpaperFolder]}" Click="ChooseFolder" Margin="0,0,8,8" />
+          <Button Content="{Binding Text[NextWallpaper]}" Command="{Binding NextWallpaperCommand}" IsVisible="{Binding HasWallpaperFolder}" Margin="0,0,8,8" />
+          <Button Content="{Binding Text[ClearWallpaper]}" Command="{Binding ClearWallpaperCommand}" Classes="subtle" Margin="0,0,8,8" />
+        </WrapPanel>
+        <StackPanel IsVisible="{Binding HasWallpaperFolder}" Spacing="12">
+          <CheckBox Content="{Binding Text[RotateWallpapers]}" IsChecked="{Binding RotateWallpapers}" />
+          <StackPanel IsVisible="{Binding RotateWallpapers}" Spacing="8">
+            <TextBlock Text="{Binding Text[WallpaperInterval]}" />
+            <NumericUpDown Value="{Binding WallpaperIntervalMinutes}" Minimum="1" Maximum="1440" Increment="1" FormatString="0" Width="180" HorizontalAlignment="Left" AutomationProperties.Name="{Binding Text[WallpaperInterval]}" />
+          </StackPanel>
+          <CheckBox Content="{Binding Text[RandomWallpaper]}" IsChecked="{Binding RandomWallpaper}" />
+          <TextBlock Text="{Binding Text[WallpaperRotationHint]}" Classes="muted" FontSize="12" TextWrapping="Wrap" />
+        </StackPanel>
+        <TextBlock Text="{Binding Text[WallpaperFit]}" />
+        <ComboBox ItemsSource="{Binding Fits}" SelectedIndex="{Binding FitIndex}" HorizontalAlignment="Stretch" AutomationProperties.Name="{Binding Text[WallpaperFit]}">
+          <ComboBox.ItemTemplate><DataTemplate x:DataType="vm:ThemeOptionViewModel"><TextBlock Text="{Binding Label}" TextTrimming="CharacterEllipsis" /></DataTemplate></ComboBox.ItemTemplate>
+        </ComboBox>
+        <Grid ColumnDefinitions="*,60"><TextBlock Text="{Binding Text[WallpaperBlur]}" /><TextBlock Grid.Column="1" Text="{Binding WallpaperBlur, StringFormat={}{0:0} px}" HorizontalAlignment="Right" /></Grid>
+        <Slider Minimum="0" Maximum="50" Value="{Binding WallpaperBlur}" AutomationProperties.Name="{Binding Text[WallpaperBlur]}" />
+        <Grid ColumnDefinitions="*,60"><TextBlock Text="{Binding Text[WallpaperBrightness]}" /><TextBlock Grid.Column="1" Text="{Binding WallpaperBrightness, StringFormat={}{0:0}%}" HorizontalAlignment="Right" /></Grid>
+        <Slider Minimum="20" Maximum="100" Value="{Binding WallpaperBrightness}" AutomationProperties.Name="{Binding Text[WallpaperBrightness]}" />
+        <Grid ColumnDefinitions="*,60"><TextBlock Text="{Binding Text[WallpaperOpacity]}" /><TextBlock Grid.Column="1" Text="{Binding WallpaperOpacity, StringFormat={}{0:0}%}" HorizontalAlignment="Right" /></Grid>
+        <Slider Minimum="0" Maximum="100" Value="{Binding WallpaperOpacity}" AutomationProperties.Name="{Binding Text[WallpaperOpacity]}" />
+      </StackPanel>
+    </Border>
+  </StackPanel>
+</UserControl>

@@ -1,0 +1,131 @@
+<UserControl xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Orion.Desktop.ViewModels" x:Class="Orion.Desktop.Views.ContentLibraryPanel" x:DataType="vm:ContentLibraryViewModel">
+  <UserControl.Styles>
+    <Style Selector="ListBoxItem"><Setter Property="Padding" Value="4" /><Setter Property="Margin" Value="2" /></Style>
+    <Style Selector="ListBoxItem /template/ ContentPresenter"><Setter Property="CornerRadius" Value="10" /></Style>
+    <Style Selector="ListBoxItem:selected /template/ ContentPresenter, ListBoxItem:selected:pointerover /template/ ContentPresenter">
+      <Setter Property="Background" Value="{DynamicResource OrionSelectionBrush}" /><Setter Property="Foreground" Value="{DynamicResource OrionTextBrush}" />
+    </Style>
+    <Style Selector="ListBox.libraryProjects ListBoxItem"><Setter Property="HorizontalContentAlignment" Value="Stretch" /><Setter Property="Margin" Value="0,0,0,6" /><Setter Property="Padding" Value="12" /><Setter Property="CornerRadius" Value="12" /></Style>
+    <Style Selector="ListBox.libraryProjects ListBoxItem:pointerover /template/ ContentPresenter"><Setter Property="Background" Value="{DynamicResource OrionAccentSurfaceBrush}" /></Style>
+    <Style Selector="ListBox.libraryProjects ListBoxItem:selected /template/ ContentPresenter, ListBox.libraryProjects ListBoxItem:selected:pointerover /template/ ContentPresenter"><Setter Property="Background" Value="{DynamicResource OrionSelectionBrush}" /></Style>
+  </UserControl.Styles>
+  <Grid RowDefinitions="Auto,Auto,*,Auto" RowSpacing="16">
+    <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto" ColumnSpacing="12" RowSpacing="12">
+      <StackPanel Spacing="6"><TextBlock Text="{Binding Text[ContentTitle]}" Classes="heading" /><TextBlock Text="{Binding Text[ContentLibraryHint]}" Classes="muted" TextWrapping="Wrap" /></StackPanel>
+      <Button Grid.Column="1" Content="{Binding Text[ContentImport]}" Click="ImportFile" Classes="primary" VerticalAlignment="Top" IsEnabled="{Binding IsIdle}" />
+      <Border Grid.Row="1" Grid.ColumnSpan="2" Background="{DynamicResource OrionWarningSurfaceBrush}" CornerRadius="10" Padding="12">
+        <StackPanel Spacing="6">
+          <TextBlock Text="{Binding Text[ContentExperimentalTitle]}" FontWeight="SemiBold" Foreground="{DynamicResource OrionWarningTextBrush}" />
+          <TextBlock Text="{Binding Text[ContentExperimentalNotice]}" TextWrapping="Wrap" FontSize="12" Foreground="{DynamicResource OrionWarningTextBrush}" />
+        </StackPanel>
+      </Border>
+    </Grid>
+    <Grid Grid.Row="1" ColumnDefinitions="*,160,Auto" ColumnSpacing="10" IsEnabled="{Binding IsIdle}">
+      <TextBox Text="{Binding Search}" Watermark="{Binding Text[ContentSearch]}" />
+      <ComboBox Grid.Column="1" ItemsSource="{Binding Kinds}" SelectedIndex="{Binding KindIndex}" HorizontalAlignment="Stretch" />
+      <Button Grid.Column="2" Content="{Binding Text[ContentRefresh]}" Command="{Binding RefreshCommand}" />
+    </Grid>
+    <TabControl Grid.Row="2" Classes="sectionTabs">
+      <TabItem Header="{Binding Text[ContentLibrary]}">
+        <Grid x:Name="LibraryLayout" ColumnDefinitions="320,*" ColumnSpacing="16" Margin="0,14,0,0" SizeChanged="LibraryLayoutSizeChanged">
+          <Border Classes="panel" Padding="6" IsVisible="{Binding !Empty}">
+            <Grid>
+              <ListBox Classes="libraryProjects" ItemsSource="{Binding Items}" SelectedItem="{Binding Selected}" Background="Transparent" IsEnabled="{Binding IsIdle}" AutomationProperties.Name="{Binding Text[ContentLibrary]}" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                <ListBox.ItemTemplate>
+                  <DataTemplate x:DataType="vm:LibraryRow">
+                    <Grid ColumnDefinitions="52,*" ColumnSpacing="12" ToolTip.Tip="{Binding Name}">
+                      <Border Width="52" Height="52" CornerRadius="12" Background="{DynamicResource OrionAccentSurfaceBrush}" ClipToBounds="True" VerticalAlignment="Top">
+                        <Grid><TextBlock Text="◇" FontSize="26" Foreground="{DynamicResource OrionAccentBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" /><Image Source="{Binding Icon}" Stretch="UniformToFill" /></Grid>
+                      </Border>
+                      <StackPanel Grid.Column="1" Spacing="6">
+                        <TextBlock Text="{Binding Name}" FontWeight="SemiBold" TextWrapping="Wrap" MaxLines="2" TextTrimming="CharacterEllipsis" />
+                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="6"><TextBlock Text="{Binding KindLabel}" FontSize="11" Foreground="{DynamicResource OrionAccentBrush}" TextTrimming="CharacterEllipsis" /><TextBlock Grid.Column="1" Text="{Binding PackCount}" Classes="muted" FontSize="11" /></Grid>
+                        <TextBlock Text="{Binding Detail, StringFormat='v{0}'}" IsVisible="{Binding HasVersion}" Classes="muted" FontSize="11" TextTrimming="CharacterEllipsis" />
+                      </StackPanel>
+                    </Grid>
+                  </DataTemplate>
+                </ListBox.ItemTemplate>
+              </ListBox>
+            </Grid>
+          </Border>
+          <ScrollViewer Grid.Column="1" HorizontalScrollBarVisibility="Disabled" IsVisible="{Binding !Empty}">
+            <StackPanel Spacing="16" IsVisible="{Binding HasSelection}" Margin="0,0,8,0">
+              <ItemsControl ItemsSource="{Binding Details}">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate x:DataType="vm:LibraryPackRow">
+                    <Border Classes="panel" Padding="18" Margin="0,0,0,10">
+                      <Grid ColumnDefinitions="64,*" ColumnSpacing="14">
+                        <Border Height="64" Width="64" CornerRadius="12" Background="{DynamicResource OrionAccentSurfaceBrush}" ClipToBounds="True" VerticalAlignment="Top"><Grid><TextBlock Text="◇" FontSize="28" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="{DynamicResource OrionAccentBrush}" /><Image Source="{Binding Icon}" Stretch="UniformToFill" /></Grid></Border>
+                        <StackPanel Grid.Column="1" Spacing="7">
+                          <TextBlock Text="{Binding Entry.Name}" FontSize="18" FontWeight="SemiBold" TextWrapping="Wrap" />
+                          <TextBlock Text="{Binding ModifiedLabel}" IsVisible="{Binding IsWorld}" Classes="muted" FontSize="12" />
+                          <TextBlock Text="{Binding Entry.Description}" TextWrapping="Wrap" Classes="muted" />
+                          <TextBlock Text="{Binding Entry.Version, StringFormat='v{0}'}" IsVisible="{Binding HasVersion}" Foreground="{DynamicResource OrionAccentBrush}" FontSize="12" />
+                          <TextBlock Text="{Binding Entry.MinimumEngineVersion, StringFormat='Minecraft ≥ {0}'}" IsVisible="{Binding HasMinimum}" FontSize="12" Classes="muted" />
+                        </StackPanel>
+                      </Grid>
+                    </Border>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+              <Border Classes="panel" Padding="18" IsEnabled="{Binding IsIdle}">
+                <StackPanel Spacing="12">
+                  <TextBlock Text="{Binding Text[ContentTargets]}" FontSize="18" FontWeight="SemiBold" />
+                  <TextBlock Text="{Binding Text[ContentLinkHint]}" Classes="muted" FontSize="12" TextWrapping="Wrap" IsVisible="{Binding !IsWorld}" />
+                  <TextBlock Text="{Binding Text[ContentCopyWorldHint]}" Classes="muted" FontSize="12" TextWrapping="Wrap" IsVisible="{Binding IsWorld}" />
+                  <ComboBox ItemsSource="{Binding Targets}" SelectedItem="{Binding Target}" HorizontalAlignment="Stretch" PlaceholderText="{Binding Text[CfChooseDestination]}">
+                    <ComboBox.ItemTemplate><DataTemplate x:DataType="vm:ContentTargetViewModel"><TextBlock Text="{Binding Name}" /></DataTemplate></ComboBox.ItemTemplate>
+                  </ComboBox>
+                  <TextBlock Text="{Binding Target.ContentStatus}" Classes="muted" FontSize="12" />
+                  <TextBlock Text="{Binding Target.Warning}" Foreground="{DynamicResource OrionWarningTextBrush}" TextWrapping="Wrap" />
+                  <StackPanel IsVisible="{Binding IsWorld}" Spacing="6">
+                    <ComboBox ItemsSource="{Binding Target.Profiles}" SelectedItem="{Binding Target.Profile}" HorizontalAlignment="Stretch" PlaceholderText="{Binding Text[ContentChooseProfile]}" />
+                    <TextBlock Text="{Binding Text[ContentNeedsProfile]}" IsVisible="{Binding !Target.HasProfiles}" Classes="muted" TextWrapping="Wrap" FontSize="12" />
+                  </StackPanel>
+                  <WrapPanel>
+                    <Button Content="{Binding Text[ContentDistribute]}" Command="{Binding DistributeCommand}" Classes="primary" Margin="0,0,8,8" />
+                    <Button Content="{Binding Text[ContentUnlink]}" Command="{Binding UnlinkCommand}" IsVisible="{Binding CanUnlink}" Classes="subtle" Margin="0,0,0,8" />
+                  </WrapPanel>
+                </StackPanel>
+              </Border>
+            </StackPanel>
+          </ScrollViewer>
+          <Border x:Name="LibraryEmptyState" Grid.ColumnSpan="2" Classes="panel" IsVisible="{Binding Empty}">
+            <ScrollViewer HorizontalScrollBarVisibility="Disabled">
+              <StackPanel MaxWidth="480" Margin="16" HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="16">
+                <Border Width="64" Height="64" CornerRadius="20" Background="{DynamicResource OrionAccentSurfaceBrush}" HorizontalAlignment="Center">
+                  <TextBlock Text="◇" FontSize="32" Foreground="{DynamicResource OrionAccentBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                </Border>
+                <TextBlock Text="{Binding EmptyTitle}" FontSize="22" FontWeight="SemiBold" TextAlignment="Center" TextWrapping="Wrap" />
+                <TextBlock Text="{Binding EmptyHint}" Classes="muted" TextAlignment="Center" TextWrapping="Wrap" LineHeight="24" />
+                <Button Content="{Binding Text[ContentImport]}" Click="ImportFile" Classes="primary" HorizontalAlignment="Center" IsVisible="{Binding !HasFilters}" IsEnabled="{Binding IsIdle}" />
+                <Button Content="{Binding Text[ContentClearFilters]}" Command="{Binding ClearFiltersCommand}" HorizontalAlignment="Center" IsVisible="{Binding HasFilters}" />
+              </StackPanel>
+            </ScrollViewer>
+          </Border>
+        </Grid>
+      </TabItem>
+      <TabItem Header="{Binding Text[ContentByInstance]}">
+        <ScrollViewer HorizontalScrollBarVisibility="Disabled" Margin="0,14,0,0">
+          <StackPanel Spacing="16">
+            <TextBlock Text="{Binding Text[ContentLocalHint]}" Classes="muted" TextWrapping="Wrap" />
+            <ItemsControl ItemsSource="{Binding Targets}" IsEnabled="{Binding IsIdle}">
+              <ItemsControl.ItemTemplate><DataTemplate x:DataType="vm:ContentTargetViewModel">
+                <Border Classes="panel" Margin="0,0,8,12" Padding="20"><Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                  <TextBlock Text="{Binding Name}" FontSize="18" FontWeight="SemiBold" VerticalAlignment="Center" />
+                  <Button Grid.Column="1" Click="ManageInstance" Content="{Binding $parent[UserControl].((vm:ContentLibraryViewModel)DataContext).Text[ContentManageLocal]}" />
+                </Grid></Border>
+              </DataTemplate></ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </StackPanel>
+        </ScrollViewer>
+      </TabItem>
+    </TabControl>
+    <StackPanel Grid.Row="3" Spacing="8">
+      <TextBlock Text="{Binding Error}" Foreground="{DynamicResource OrionErrorTextBrush}" TextWrapping="Wrap" />
+      <Grid ColumnDefinitions="*,Auto"><TextBlock Text="{Binding Status}" Classes="muted" VerticalAlignment="Center" /><Button Grid.Column="1" Content="{Binding Text[Cancel]}" Command="{Binding CancelCommand}" IsVisible="{Binding Busy}" /></Grid>
+      <ProgressBar IsIndeterminate="True" IsVisible="{Binding Busy}" Height="3" />
+    </StackPanel>
+  </Grid>
+</UserControl>

@@ -1,0 +1,75 @@
+<UserControl xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Orion.Desktop.ViewModels" x:Class="Orion.Desktop.Views.AboutPanel" x:DataType="vm:MainViewModel">
+  <UserControl.Styles>
+    <Style Selector="Button.maintainer">
+      <Setter Property="Width" Value="280" />
+      <Setter Property="Padding" Value="18" />
+      <Setter Property="Margin" Value="0,0,12,12" />
+      <Setter Property="CornerRadius" Value="14" />
+      <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+    </Style>
+    <Style Selector="Button.maintainer:pointerover /template/ ContentPresenter">
+      <Setter Property="BorderBrush" Value="{DynamicResource OrionAccentBorderBrush}" />
+    </Style>
+  </UserControl.Styles>
+  <ScrollViewer HorizontalScrollBarVisibility="Disabled">
+    <StackPanel Spacing="24">
+      <TextBlock Text="Orion Launcher" Classes="heading" />
+      <TextBlock Text="{Binding Text[AboutText]}" Classes="muted" TextWrapping="Wrap" LineHeight="26" />
+      <Border Classes="panel">
+        <StackPanel Spacing="18">
+          <WrapPanel>
+            <Border Background="{DynamicResource OrionAccentSurfaceBrush}" CornerRadius="6" Padding="12,7" Margin="0,0,10,8">
+              <TextBlock Text="{Binding LauncherVersion}" Foreground="{DynamicResource OrionAccentBrush}" FontWeight="SemiBold" />
+            </Border>
+            <Border Background="{DynamicResource OrionInsetBrush}" CornerRadius="6" Padding="12,7" Margin="0,0,10,8">
+              <TextBlock Text="{Binding PlatformInfo}" Classes="muted" />
+            </Border>
+            <TextBlock Text="MIT License" Classes="muted" Margin="0,7,0,8" />
+          </WrapPanel>
+          <Button Content="{Binding Text[Changelogs]}" Command="{Binding OpenChangelogCommand}" Classes="primary" />
+        </StackPanel>
+      </Border>
+      <StackPanel Spacing="16">
+        <TextBlock Text="{Binding Text[Maintainers]}" FontSize="18" FontWeight="SemiBold" />
+        <WrapPanel>
+          <Button Command="{Binding OpenMaintainerCommand}" CommandParameter="yPerfectBR" Classes="maintainer"
+                  AutomationProperties.Name="yPerfectBR · GitHub" ToolTip.Tip="https://github.com/yPerfectBR">
+            <Grid ColumnDefinitions="52,*,16">
+              <Border Width="52" Height="52" CornerRadius="26" ClipToBounds="True" Background="{DynamicResource OrionPanelBrush}">
+                <Image Source="avares://OrionLauncher/Assets/Maintainers/yPerfectBR.png" Stretch="UniformToFill" />
+              </Border>
+              <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="4" Margin="14,0,12,0">
+                <TextBlock Text="yPerfectBR" FontSize="16" FontWeight="SemiBold" />
+                <TextBlock Text="{Binding Text[GitHubProfile]}" Classes="muted" FontSize="12" />
+              </StackPanel>
+              <Path Grid.Column="2" Width="14" Height="14" Stretch="Uniform" VerticalAlignment="Center"
+                    Stroke="{DynamicResource OrionMutedBrush}" StrokeThickness="1.5"
+                    Data="M 4,12 L 12,4 M 5,4 L 12,4 L 12,11" />
+            </Grid>
+          </Button>
+          <Button Command="{Binding OpenMaintainerCommand}" CommandParameter="raonygamer" Classes="maintainer"
+                  AutomationProperties.Name="raonygamer · GitHub" ToolTip.Tip="https://github.com/raonygamer">
+            <Grid ColumnDefinitions="52,*,16">
+              <Border Width="52" Height="52" CornerRadius="26" ClipToBounds="True" Background="{DynamicResource OrionPanelBrush}">
+                <Image Source="avares://OrionLauncher/Assets/Maintainers/raonygamer.png" Stretch="UniformToFill" />
+              </Border>
+              <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="4" Margin="14,0,12,0">
+                <TextBlock Text="raonygamer" FontSize="16" FontWeight="SemiBold" />
+                <TextBlock Text="{Binding Text[GitHubProfile]}" Classes="muted" FontSize="12" />
+              </StackPanel>
+              <Path Grid.Column="2" Width="14" Height="14" Stretch="Uniform" VerticalAlignment="Center"
+                    Stroke="{DynamicResource OrionMutedBrush}" StrokeThickness="1.5"
+                    Data="M 4,12 L 12,4 M 5,4 L 12,4 L 12,11" />
+            </Grid>
+          </Button>
+        </WrapPanel>
+      </StackPanel>
+      <Border Classes="panel"><StackPanel Spacing="14">
+        <TextBlock Text="{Binding Text[Credits]}" FontSize="18" FontWeight="SemiBold" />
+        <TextBlock Text="BedrockNative/Xodus · BedrockNative/WineGDK" Classes="muted" TextWrapping="Wrap" />
+        <TextBlock Text="JaymeFernandes (TranslationSystemUI)" Classes="muted" TextWrapping="Wrap" />
+      </StackPanel></Border>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

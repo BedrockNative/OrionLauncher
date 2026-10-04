@@ -1,0 +1,90 @@
+<Window xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:Orion.Desktop.ViewModels" xmlns:cf="using:Orion.Infrastructure.CurseForge"
+        x:Class="Orion.Desktop.Views.ContentWindow" x:DataType="vm:ContentManagementViewModel"
+        Title="{Binding Text[ContentTitle]}" Width="1040" Height="780" MinWidth="780" MinHeight="600"
+        WindowStartupLocation="CenterOwner">
+  <Grid Margin="28" RowDefinitions="Auto,*,Auto" RowSpacing="18">
+    <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto" RowSpacing="12">
+      <StackPanel Spacing="5">
+        <TextBlock Text="{Binding Text[ContentTitle]}" FontSize="26" FontWeight="SemiBold" />
+        <TextBlock Text="{Binding InstanceName}" Classes="muted" />
+      </StackPanel>
+      <Button Grid.Column="1" Content="{Binding Text[Close]}" Click="CloseWindow" VerticalAlignment="Top" Classes="subtle" />
+      <Border Grid.Row="1" Grid.ColumnSpan="2" Background="{DynamicResource OrionWarningSurfaceBrush}" CornerRadius="10" Padding="12">
+        <StackPanel Spacing="6">
+          <TextBlock Text="{Binding Text[ContentExperimentalTitle]}" FontWeight="SemiBold" Foreground="{DynamicResource OrionWarningTextBrush}" />
+          <TextBlock Text="{Binding Text[ContentExperimentalNotice]}" TextWrapping="Wrap" FontSize="12" Foreground="{DynamicResource OrionWarningTextBrush}" />
+        </StackPanel>
+      </Border>
+    </Grid>
+        <Grid Grid.Row="1" RowDefinitions="Auto,Auto,*,Auto" RowSpacing="14" Margin="0,16,0,0">
+          <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="10" IsEnabled="{Binding IsIdle}">
+            <ComboBox ItemsSource="{Binding Kinds}" SelectedIndex="{Binding KindIndex}" MinWidth="180" />
+            <Button Grid.Column="1" Content="{Binding Text[ContentRefresh]}" Command="{Binding RefreshCommand}" />
+            <Button Grid.Column="2" Content="{Binding Text[ContentImport]}" Classes="primary" Click="ImportFile" />
+          </Grid>
+          <StackPanel Grid.Row="1" Spacing="10" IsEnabled="{Binding IsIdle}">
+            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16">
+              <TextBox Text="{Binding Search}" Watermark="{Binding Text[ContentSearch]}" />
+              <CheckBox Grid.Column="1" Content="{Binding Text[ContentArchived]}" IsChecked="{Binding Archived}" />
+            </Grid>
+            <ComboBox ItemsSource="{Binding Profiles}" SelectedItem="{Binding Profile}" IsVisible="{Binding IsWorld}" IsEnabled="{Binding HasProfiles}" PlaceholderText="{Binding Text[ContentChooseProfile]}" HorizontalAlignment="Stretch" />
+            <TextBlock Text="{Binding Text[ContentNeedsProfile]}" IsVisible="{Binding NeedsWorldProfile}" Classes="muted" TextWrapping="Wrap" FontSize="12" />
+          </StackPanel>
+          <Border Grid.Row="2" Classes="panel" Padding="8">
+            <Grid>
+              <ListBox ItemsSource="{Binding Items}" SelectedItem="{Binding Selected}" Background="Transparent" IsEnabled="{Binding IsIdle}" AutomationProperties.Name="{Binding Text[ContentInstalled]}">
+                <ListBox.ItemTemplate>
+                  <DataTemplate x:DataType="vm:ContentRow">
+                    <Grid ColumnDefinitions="96,*" ColumnSpacing="14" Margin="6,8">
+                      <Border Background="{DynamicResource OrionInsetBrush}" CornerRadius="10" Height="64" ClipToBounds="True" VerticalAlignment="Top">
+                        <Grid><TextBlock Text="{Binding Symbol}" FontSize="23" Foreground="{DynamicResource OrionAccentBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" /><Image Source="{Binding Metadata.Icon}" Stretch="UniformToFill" /></Grid>
+                      </Border>
+                      <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="4">
+                        <TextBlock Text="{Binding Name}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                        <TextBlock Text="{Binding Detail}" Classes="muted" FontSize="11" TextTrimming="CharacterEllipsis" />
+                        <TextBlock Text="{Binding Entry.Description}" Classes="muted" FontSize="12" TextWrapping="Wrap" MaxHeight="48" />
+                        <TextBlock Text="{Binding Entry.MinimumEngineVersion, StringFormat='Minecraft ≥ {0}'}" IsVisible="{Binding Metadata.HasMinimum}" Classes="muted" FontSize="11" />
+                        <TextBlock Text="{Binding $parent[Window].((vm:ContentManagementViewModel)DataContext).Text[ContentSharedPack]}" IsVisible="{Binding Entry.Shared}" Foreground="{DynamicResource OrionAccentBrush}" FontSize="11" />
+                      </StackPanel>
+                    </Grid>
+                  </DataTemplate>
+                </ListBox.ItemTemplate>
+              </ListBox>
+              <StackPanel IsVisible="{Binding Empty}" HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="10" Margin="32">
+                <TextBlock Text="◇" FontSize="40" Foreground="{DynamicResource OrionAccentBrush}" HorizontalAlignment="Center" />
+                <TextBlock Text="{Binding Text[ContentEmpty]}" FontSize="18" FontWeight="SemiBold" TextWrapping="Wrap" TextAlignment="Center" />
+                <TextBlock Text="{Binding Text[ContentEmptyHint]}" Classes="muted" TextWrapping="Wrap" TextAlignment="Center" MaxWidth="480" />
+              </StackPanel>
+            </Grid>
+          </Border>
+          <StackPanel Grid.Row="3" Spacing="12" IsEnabled="{Binding IsIdle}">
+            <Grid ColumnDefinitions="*,Auto,Auto,Auto,Auto" ColumnSpacing="8">
+              <TextBlock Text="{Binding CountLabel}" Classes="muted" VerticalAlignment="Center" />
+              <Button Grid.Column="1" Content="{Binding Text[Folder]}" Click="OpenFolder" IsEnabled="{Binding HasSelection}" Classes="subtle" />
+              <Button Grid.Column="2" Content="{Binding Text[ContentExport]}" Click="ExportFile" IsEnabled="{Binding HasSelection}" />
+              <Button Grid.Column="3" Content="{Binding Text[Archive]}" Command="{Binding RequestArchiveCommand}" IsVisible="{Binding CanArchive}" />
+              <Button Grid.Column="4" Content="{Binding Text[ContentRestore]}" Command="{Binding RestoreCommand}" IsVisible="{Binding CanRestore}" Classes="primary" />
+            </Grid>
+            <Border IsVisible="{Binding ConfirmArchive}" Background="{DynamicResource OrionWarningSurfaceBrush}" CornerRadius="10" Padding="16">
+              <StackPanel Spacing="10">
+                <TextBlock Text="{Binding Text[ContentArchiveHint]}" TextWrapping="Wrap" Foreground="{DynamicResource OrionWarningTextBrush}" />
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                  <Button Content="{Binding Text[Cancel]}" Command="{Binding DismissArchiveCommand}" />
+                  <Button Content="{Binding Text[Archive]}" Command="{Binding ArchiveCommand}" />
+                </StackPanel>
+              </StackPanel>
+            </Border>
+            <TextBlock Text="{Binding Text[ContentSafetyHint]}" Classes="muted" FontSize="11" TextWrapping="Wrap" />
+          </StackPanel>
+        </Grid>
+    <StackPanel Grid.Row="2" Spacing="8">
+      <TextBlock Text="{Binding Error}" Foreground="{DynamicResource OrionErrorTextBrush}" TextWrapping="Wrap" MaxHeight="75" />
+      <ProgressBar IsVisible="{Binding IsBusy}" IsIndeterminate="{Binding !Downloading}" Value="{Binding Progress}" Height="4" />
+      <Grid ColumnDefinitions="*,Auto">
+        <TextBlock Text="{Binding Status}" Classes="muted" FontSize="12" VerticalAlignment="Center" />
+        <Button Grid.Column="1" Content="{Binding Text[Cancel]}" Command="{Binding CancelCommand}" IsVisible="{Binding IsBusy}" Classes="subtle" />
+      </Grid>
+    </StackPanel>
+  </Grid>
+</Window>

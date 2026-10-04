@@ -1,0 +1,8 @@
+<UserControl xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" x:Class="Orion.Desktop.Views.ProjectCoverView" IsHitTestVisible="False">
+  <Border Background="{DynamicResource OrionAccentSurfaceBrush}" CornerRadius="10" ClipToBounds="True">
+    <Grid>
+      <TextBlock x:Name="Fallback" Text="◇" FontSize="32" Foreground="{DynamicResource OrionAccentBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+      <Image x:Name="Picture" Stretch="Uniform" />
+    </Grid>
+  </Border>
+</UserControl>

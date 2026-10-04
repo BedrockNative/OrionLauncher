@@ -1,0 +1,23 @@
+<UserControl xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Orion.Desktop.ViewModels" xmlns:views="using:Orion.Desktop.Views" x:Class="Orion.Desktop.Views.InstanceSettingsPanel" x:DataType="vm:MainViewModel">
+  <Border Background="{DynamicResource OrionOverlayBrush}">
+    <Border Classes="panel" MaxWidth="940" MaxHeight="760" Margin="24" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Padding="28">
+      <Grid RowDefinitions="Auto,*,Auto,Auto">
+        <StackPanel Spacing="6" Margin="0,0,0,20">
+          <TextBlock Text="{Binding Text[InstanceSettings]}" FontSize="26" FontWeight="SemiBold" />
+          <TextBlock Text="{Binding LaunchEditor.Name}" Classes="muted" TextTrimming="CharacterEllipsis" />
+          <TextBlock Text="{Binding Text[StopToEdit]}" Foreground="{DynamicResource OrionWarningTextBrush}" IsVisible="{Binding !LaunchEditor.CanEdit}" FontSize="12" TextWrapping="Wrap" />
+        </StackPanel>
+        <Grid Grid.Row="1" IsEnabled="{Binding IsIdle}">
+          <views:LaunchOptionsFields DataContext="{Binding LaunchEditor}" />
+        </Grid>
+        <TextBlock Grid.Row="2" Text="{Binding Error}" Foreground="{DynamicResource OrionErrorTextBrush}" TextWrapping="Wrap" IsVisible="{Binding HasError}" Margin="0,12,0,0" MaxHeight="65" />
+        <Grid Grid.Row="3" ColumnDefinitions="*,Auto,Auto" Margin="0,20,0,0" IsEnabled="{Binding IsIdle}">
+          <Button Content="{Binding Text[ResetDefaults]}" Command="{Binding LaunchEditor.ResetCommand}" IsEnabled="{Binding LaunchEditor.CanEdit}" Classes="subtle" HorizontalAlignment="Left" />
+          <Button Grid.Column="1" Content="{Binding Text[Cancel]}" Command="{Binding CloseLaunchOptionsCommand}" Margin="0,0,10,0" />
+          <Button Grid.Column="2" Classes="primary" Content="{Binding Text[Save]}" Command="{Binding SaveLaunchOptionsCommand}" IsEnabled="{Binding LaunchEditor.CanEdit}" />
+        </Grid>
+      </Grid>
+    </Border>
+  </Border>
+</UserControl>

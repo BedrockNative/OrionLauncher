@@ -1,0 +1,207 @@
+<Window xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:Orion.Desktop.ViewModels" xmlns:views="using:Orion.Desktop.Views" x:Class="Orion.Desktop.Views.MainWindow" x:DataType="vm:MainViewModel"
+        Title="Orion Launcher" Width="1180" Height="780" MinWidth="900" MinHeight="640" WindowStartupLocation="CenterScreen">
+  <Grid RowDefinitions="Auto,*">
+    <views:WallpaperView x:Name="Wallpaper" Grid.RowSpan="2" />
+    <Border IsVisible="{Binding Appearance.Advanced.TopNavigation}" Background="{DynamicResource OrionMaterialBrush}" Padding="16,8">
+      <Grid ColumnDefinitions="Auto,*,Auto">
+        <Image Source="/Assets/orion.png" Width="32" Height="32" Margin="0,0,16,0" />
+        <WrapPanel Grid.Column="1" Orientation="Horizontal">
+          <Button Classes="nav" Classes.active="{Binding IsLibrary}" Content="{Binding Text[Instances]}" Command="{Binding NavigateCommand}" CommandParameter="library" />
+          <Button Classes="nav" Classes.active="{Binding IsDownloads}" Content="{Binding Text[Downloads]}" Command="{Binding NavigateCommand}" CommandParameter="downloads" />
+          <Button Classes="nav" Classes.active="{Binding IsContent}" Content="{Binding Text[ContentTitle]}" Command="{Binding NavigateCommand}" CommandParameter="content" />
+          <Button Classes="nav" Classes.active="{Binding IsCurseForge}" Content="CurseForge" Command="{Binding NavigateCommand}" CommandParameter="curseforge" />
+          <Button Classes="nav" Classes.active="{Binding IsRtx}" Content="RTX Studio" Command="{Binding NavigateCommand}" CommandParameter="rtx" />
+          <Button Classes="nav" Classes.active="{Binding IsAccount}" Content="{Binding Text[Account]}" Command="{Binding NavigateCommand}" CommandParameter="account" />
+          <Button Classes="nav" Classes.active="{Binding IsSettings}" Content="{Binding Text[Settings]}" Command="{Binding NavigateCommand}" CommandParameter="settings" />
+          <Button Classes="nav" Classes.active="{Binding IsAbout}" Content="{Binding Text[About]}" Command="{Binding NavigateCommand}" CommandParameter="about" />
+        </WrapPanel>
+        <Button Grid.Column="2" Classes="subtle" Command="{Binding NavigateCommand}" CommandParameter="account" ToolTip.Tip="{Binding CurrentProfile.Hint}">
+          <StackPanel Orientation="Horizontal" Spacing="8">
+            <Border Width="28" Height="28" CornerRadius="14" ClipToBounds="True" Background="{DynamicResource OrionAccentSurfaceBrush}">
+              <Grid><Image Source="{Binding CurrentProfile.Avatar}" Stretch="UniformToFill" IsVisible="{Binding CurrentProfile.HasAvatar}" /><TextBlock Text="{Binding CurrentProfile.Initial}" IsVisible="{Binding !CurrentProfile.HasAvatar}" HorizontalAlignment="Center" VerticalAlignment="Center" /></Grid>
+            </Border>
+            <TextBlock Text="{Binding CurrentProfile.DisplayName}" VerticalAlignment="Center" MaxWidth="130" TextTrimming="CharacterEllipsis" />
+          </StackPanel>
+        </Button>
+      </Grid>
+    </Border>
+  <Grid x:Name="WorkspaceGrid" Grid.Row="1" ColumnDefinitions="Auto,*" RowDefinitions="*,Auto,Auto">
+    <Border Width="220" IsVisible="{Binding !Appearance.Advanced.TopNavigation}" Grid.RowSpan="3" Background="{DynamicResource OrionMaterialSidebarBrush}" BorderBrush="{DynamicResource OrionBorderBrush}" BorderThickness="0,0,1,0" Padding="18,28,18,20">
+      <Grid RowDefinitions="Auto,Auto,*,Auto">
+        <StackPanel Orientation="Horizontal" Spacing="12" Margin="6,0,0,40">
+          <Image Source="/Assets/orion.png" Width="42" Height="42" />
+          <StackPanel VerticalAlignment="Center"><TextBlock Text="ORION" FontSize="23" FontWeight="Bold" LetterSpacing="3" /><TextBlock Text="BEDROCK LAUNCHER" FontSize="9" LetterSpacing="1.6" Classes="muted" /></StackPanel>
+        </StackPanel>
+        <StackPanel Grid.Row="1" Spacing="8">
+          <TextBlock Text="{Binding Text[Workspace]}" FontSize="10" LetterSpacing="1.5" Classes="muted" Margin="14,0,0,10" />
+          <Button Classes="nav" Classes.active="{Binding IsLibrary}" Command="{Binding NavigateCommand}" CommandParameter="library" AutomationProperties.Name="{Binding Text[Instances]}">
+            <StackPanel Orientation="Horizontal" Spacing="13">
+              <Path Data="M1,1 L7,1 L7,7 L1,7 Z M11,1 L17,1 L17,7 L11,7 Z M1,11 L7,11 L7,17 L1,17 Z M11,11 L17,11 L17,17 L11,17 Z" Width="17" Height="17" Stretch="Uniform" Stroke="{Binding $parent[Button].Foreground}" StrokeThickness="1.6" VerticalAlignment="Center" />
+              <TextBlock Text="{Binding Text[Instances]}" VerticalAlignment="Center" />
+            </StackPanel>
+          </Button>
+          <Button Classes="nav" Classes.active="{Binding IsDownloads}" Command="{Binding NavigateCommand}" CommandParameter="downloads" AutomationProperties.Name="{Binding Text[Downloads]}">
+            <StackPanel Orientation="Horizontal" Spacing="13">
+              <Path Data="M9,1 L9,12 M4,7 L9,12 L14,7 M1,12 L1,17 L17,17 L17,12" Width="17" Height="17" Stretch="Uniform" Stroke="{Binding $parent[Button].Foreground}" StrokeThickness="1.6" VerticalAlignment="Center" />
+              <TextBlock Text="{Binding Text[Downloads]}" VerticalAlignment="Center" />
+            </StackPanel>
+          </Button>
+          <Button Classes="nav" Classes.active="{Binding IsContent}" Command="{Binding NavigateCommand}" CommandParameter="content" AutomationProperties.Name="{Binding Text[ContentTitle]}">
+            <StackPanel Orientation="Horizontal" Spacing="13"><Path Data="M1,5 L9,1 L17,5 L9,9 Z M1,5 L1,14 L9,18 L17,14 L17,5 M9,9 L9,18" Width="17" Height="17" Stretch="Uniform" Stroke="{Binding $parent[Button].Foreground}" StrokeThickness="1.6" VerticalAlignment="Center" /><TextBlock Text="{Binding Text[ContentTitle]}" VerticalAlignment="Center" /></StackPanel>
+          </Button>
+          <Button Classes="nav" Classes.active="{Binding IsCurseForge}" Command="{Binding NavigateCommand}" CommandParameter="curseforge" AutomationProperties.Name="CurseForge">
+            <StackPanel Orientation="Horizontal" Spacing="13"><Path Data="M9,1 A8,8 0 1 1 8.99,1 M12,6 L10,11 L5,13 L7,8 Z" Width="17" Height="17" Stretch="Uniform" Stroke="{Binding $parent[Button].Foreground}" StrokeThickness="1.6" VerticalAlignment="Center" /><TextBlock Text="CurseForge" VerticalAlignment="Center" /></StackPanel>
+          </Button>
+          <Button Classes="nav" Classes.active="{Binding IsRtx}" Command="{Binding NavigateCommand}" CommandParameter="rtx" AutomationProperties.Name="RTX Studio">
+            <StackPanel Orientation="Horizontal" Spacing="13"><Path Data="M9,1 L17,9 L9,17 L1,9 Z M9,1 L6,9 L9,17 M6,9 L17,9" Width="17" Height="17" Stretch="Uniform" Stroke="{Binding $parent[Button].Foreground}" StrokeThickness="1.6" VerticalAlignment="Center" /><TextBlock Text="RTX Studio" VerticalAlignment="Center" /></StackPanel>
+          </Button>
+          <Button Classes="nav" Classes.active="{Binding IsAccount}" Command="{Binding NavigateCommand}" CommandParameter="account" AutomationProperties.Name="{Binding Text[Account]}">
+            <StackPanel Orientation="Horizontal" Spacing="13">
+              <Path Data="M13,5 A4,4 0 1 1 5,5 A4,4 0 1 1 13,5 M1,18 C1,8 17,8 17,18" Width="17" Height="17" Stretch="Uniform" Stroke="{Binding $parent[Button].Foreground}" StrokeThickness="1.6" VerticalAlignment="Center" />
+              <TextBlock Text="{Binding Text[Account]}" VerticalAlignment="Center" />
+            </StackPanel>
+          </Button>
+          <Button Classes="nav" Classes.active="{Binding IsSettings}" Command="{Binding NavigateCommand}" CommandParameter="settings" AutomationProperties.Name="{Binding Text[Settings]}">
+            <StackPanel Orientation="Horizontal" Spacing="13">
+              <Path Data="M1,4 L17,4 M1,13 L17,13 M6,1 L6,7 M12,10 L12,16" Width="17" Height="17" Stretch="Uniform" Stroke="{Binding $parent[Button].Foreground}" StrokeThickness="1.6" VerticalAlignment="Center" />
+              <TextBlock Text="{Binding Text[Settings]}" VerticalAlignment="Center" />
+            </StackPanel>
+          </Button>
+          <Button Classes="nav" Classes.active="{Binding IsAbout}" Command="{Binding NavigateCommand}" CommandParameter="about" AutomationProperties.Name="{Binding Text[About]}">
+            <StackPanel Orientation="Horizontal" Spacing="13">
+              <Path Data="M17,9 A8,8 0 1 1 1,9 A8,8 0 1 1 17,9 M9,8 L9,14 M9,4 L9,5" Width="17" Height="17" Stretch="Uniform" Stroke="{Binding $parent[Button].Foreground}" StrokeThickness="1.6" VerticalAlignment="Center" />
+              <TextBlock Text="{Binding Text[About]}" VerticalAlignment="Center" />
+            </StackPanel>
+          </Button>
+        </StackPanel>
+        <Button x:Name="CurrentProfileButton" Grid.Row="3" Classes="subtle" Padding="10,12" Margin="0,24,0,0"
+                HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
+                Command="{Binding NavigateCommand}" CommandParameter="account" ToolTip.Tip="{Binding CurrentProfile.Hint}"
+                AutomationProperties.Name="{Binding CurrentProfile.Hint}">
+          <Grid ColumnDefinitions="38,*" ColumnSpacing="10">
+            <Border Width="38" Height="38" CornerRadius="19" ClipToBounds="True" Background="{DynamicResource OrionAccentSurfaceBrush}">
+              <Grid>
+                <TextBlock Text="{Binding CurrentProfile.Initial}" IsVisible="{Binding !CurrentProfile.HasAvatar}"
+                           FontSize="17" FontWeight="SemiBold" Foreground="{DynamicResource OrionAccentBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                <Image x:Name="CurrentProfileAvatar" Source="{Binding CurrentProfile.Avatar}" IsVisible="{Binding CurrentProfile.HasAvatar}" Stretch="UniformToFill" />
+              </Grid>
+            </Border>
+            <StackPanel Grid.Column="1" Spacing="3" VerticalAlignment="Center">
+              <TextBlock Text="{Binding CurrentProfile.Caption}" Foreground="{DynamicResource OrionMutedBrush}" FontSize="10" TextTrimming="CharacterEllipsis" />
+              <TextBlock x:Name="CurrentProfileName" Text="{Binding CurrentProfile.DisplayName}" FontSize="13" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+            </StackPanel>
+          </Grid>
+        </Button>
+      </Grid>
+    </Border>
+
+    <Grid x:Name="MainContent" Grid.Column="1" Margin="36,32,36,20" RowDefinitions="Auto,*">
+      <Border Grid.Row="0" IsVisible="{Binding HasError}" Background="{DynamicResource OrionErrorSurfaceBrush}" BorderBrush="{DynamicResource OrionErrorBorderBrush}" BorderThickness="1" CornerRadius="10" Padding="16" Margin="0,0,0,18">
+        <Grid ColumnDefinitions="*,Auto"><TextBlock Text="{Binding Error}" TextWrapping="Wrap" Foreground="{DynamicResource OrionErrorTextBrush}" /><Button Grid.Column="1" Content="×" Command="{Binding DismissErrorCommand}" Classes="subtle" /></Grid>
+      </Border>
+      <Grid Grid.Row="1">
+        <Grid IsVisible="{Binding IsLibrary}" RowDefinitions="Auto,Auto,*,Auto">
+          <Grid ColumnDefinitions="*,Auto" Margin="0,0,0,26">
+            <StackPanel Spacing="8"><TextBlock Text="{Binding Text[Library]}" Classes="heading" /><TextBlock Text="{Binding Text[LibrarySubtitle]}" Classes="muted" /></StackPanel>
+            <Button Grid.Column="1" Classes="primary" Content="{Binding Text[NewInstance]}" Command="{Binding OpenCreateCommand}" IsEnabled="{Binding IsIdle}" VerticalAlignment="Center" />
+          </Grid>
+          <TextBox Grid.Row="1" Text="{Binding Search}" Watermark="{Binding Text[Search]}" Margin="0,0,0,24" />
+          <ScrollViewer x:Name="LibraryScroll" Grid.Row="2" HorizontalScrollBarVisibility="Disabled">
+            <ItemsControl x:Name="LibraryItems" ItemsSource="{Binding Instances}">
+              <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+              <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="vm:InstanceCardViewModel">
+                  <Border Classes="instanceCard" Width="264" Margin="0,0,18,20" Background="{DynamicResource OrionMaterialBrush}" BorderBrush="{DynamicResource OrionBorderBrush}" BorderThickness="1" CornerRadius="14" ClipToBounds="True">
+                    <StackPanel>
+                      <views:InstanceCoverView CoverId="{Binding Instance.CoverId}" Store="{Binding Owner.Covers}"
+                                               Initial="{Binding Monogram}" Channel="{Binding Channel}" Text="{Binding Owner.Text}" />
+                      <StackPanel Margin="18" Spacing="10">
+                        <TextBlock Text="{Binding Name}" FontSize="18" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding Name}" />
+                        <TextBlock Text="{Binding Version}" Classes="muted" FontSize="12" />
+                        <Grid ColumnDefinitions="*,Auto" Margin="0,8,0,0">
+                          <Button Classes="primary" Content="{Binding Owner.Text[Play]}" Command="{Binding PlayCommand}" IsVisible="{Binding !Running}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" />
+                          <Button Content="{Binding Owner.Text[Stop]}" Command="{Binding StopCommand}" IsVisible="{Binding Running}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" />
+                          <Button Grid.Column="1" Content="•••" Margin="8,0,0,0" Command="{Binding SettingsCommand}"
+                                  ToolTip.Tip="{Binding Owner.Text[InstanceSettings]}" AutomationProperties.Name="{Binding Owner.Text[InstanceSettings]}" />
+                        </Grid>
+                      </StackPanel>
+                    </StackPanel>
+                  </Border>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </ScrollViewer>
+          <Border Grid.Row="2" IsVisible="{Binding IsEmpty}" Classes="panel" VerticalAlignment="Top" Padding="38,50">
+            <StackPanel Spacing="18" HorizontalAlignment="Center" MaxWidth="430">
+              <TextBlock Text="✧" FontSize="66" Foreground="{DynamicResource OrionAccentBrush}" HorizontalAlignment="Center" />
+              <TextBlock Text="{Binding Text[EmptyTitle]}" FontSize="22" FontWeight="SemiBold" TextAlignment="Center" TextWrapping="Wrap" />
+              <TextBlock Text="{Binding Text[EmptyText]}" Classes="muted" TextAlignment="Center" TextWrapping="Wrap" LineHeight="24" />
+              <Button Classes="primary" Content="{Binding Text[NewInstance]}" Command="{Binding OpenCreateCommand}" IsEnabled="{Binding IsIdle}" HorizontalAlignment="Center" Margin="0,12,0,0" />
+            </StackPanel>
+          </Border>
+          <TextBlock Grid.Row="3" Text="{Binding Text[UnaffiliatedNotice]}" FontSize="11"
+                     Foreground="{DynamicResource OrionMutedBrush}" TextAlignment="Center" TextWrapping="Wrap" Margin="0,20,0,0" />
+        </Grid>
+
+        <views:AccountsPanel IsVisible="{Binding IsAccount}" />
+        <Grid IsVisible="{Binding IsContent}"><views:ContentLibraryPanel DataContext="{Binding ContentLibrary}" /></Grid>
+        <Grid IsVisible="{Binding IsCurseForge}"><views:CurseForgePanel DataContext="{Binding CurseForge}" /></Grid>
+        <Grid IsVisible="{Binding IsRtx}"><views:RtxPanel DataContext="{Binding Rtx}" /></Grid>
+        <views:DownloadsPanel IsVisible="{Binding IsDownloads}" />
+
+        <views:SettingsPanel IsVisible="{Binding IsSettings}" />
+
+        <views:AboutPanel IsVisible="{Binding IsAbout}" />
+      </Grid>
+    </Grid>
+
+    <Grid x:Name="LogDock" Grid.RowSpan="2" Grid.Column="1" Height="240" VerticalAlignment="Bottom" IsVisible="{Binding Log.IsOpen}" RowDefinitions="12,*">
+      <Thumb x:Name="LogResizeHandle" Cursor="SizeNorthSouth" DragDelta="ResizeLog" ToolTip.Tip="{Binding Text[ResizeLog]}">
+        <Thumb.Template><ControlTemplate><Border Background="Transparent"><Border Width="48" Height="4" CornerRadius="2" Background="{DynamicResource OrionAccentBorderBrush}" VerticalAlignment="Center" /></Border></ControlTemplate></Thumb.Template>
+      </Thumb>
+      <views:InstanceLogPanel Grid.Row="1" DataContext="{Binding Log}" />
+    </Grid>
+
+    <Border Grid.Row="2" Grid.Column="1" BorderBrush="{DynamicResource OrionAccentBorderBrush}" BorderThickness="0,1,0,0" Padding="24,12" Background="{DynamicResource OrionStatusBrush}">
+      <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto">
+        <TextBlock Text="{Binding Status}" Foreground="{DynamicResource OrionAccentBrush}" FontWeight="Medium" FontSize="12" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" ToolTip.Tip="{Binding Status}" />
+        <Button Grid.Column="1" Content="{Binding Text[Cancel]}" Command="{Binding CancelOperationCommand}" IsVisible="{Binding IsBusy}" Classes="subtle" Padding="10,4" />
+        <ProgressBar Grid.Row="1" Grid.ColumnSpan="2" IsVisible="{Binding IsBusy}" IsIndeterminate="{Binding Indeterminate}" Value="{Binding Progress}" Height="3" Margin="0,9,0,0" Foreground="{DynamicResource OrionAccentBrush}" />
+      </Grid>
+    </Border>
+
+    <views:InstanceSettingsPanel Grid.ColumnSpan="2" Grid.RowSpan="3" IsVisible="{Binding ShowLaunchOptions}" />
+
+    <Border Grid.ColumnSpan="2" Grid.RowSpan="3" IsVisible="{Binding ShowCreate}" Background="{DynamicResource OrionOverlayBrush}">
+      <Border Classes="panel" Width="740" MaxHeight="820" Margin="20" HorizontalAlignment="Center" VerticalAlignment="Stretch" Padding="26">
+        <Grid RowDefinitions="Auto,*,Auto">
+        <StackPanel Spacing="12" Margin="0,0,0,16">
+          <TextBlock Text="{Binding Text[NewInstance]}" FontSize="24" FontWeight="SemiBold" />
+          <TextBlock Text="{Binding Text[InstallHint]}" TextWrapping="Wrap" Classes="muted" />
+          <TextBox Watermark="{Binding Text[Name]}" Text="{Binding NewName}" MaxLength="80" IsEnabled="{Binding IsIdle}" />
+          <TextBlock Text="{Binding Text[Version]}" />
+          <Grid ColumnDefinitions="*,Auto">
+            <ComboBox ItemsSource="{Binding Versions}" SelectedItem="{Binding SelectedVersion}" HorizontalAlignment="Stretch" IsEnabled="{Binding IsIdle}" />
+            <Button Grid.Column="1" Margin="12,0,0,0" Content="{Binding Text[Refresh]}" Command="{Binding RefreshVersionsCommand}" IsEnabled="{Binding IsIdle}" />
+          </Grid>
+        </StackPanel>
+        <Grid Grid.Row="1" IsEnabled="{Binding IsIdle}">
+          <views:LaunchOptionsFields DataContext="{Binding CreationEditor}" />
+        </Grid>
+        <StackPanel Grid.Row="2" Spacing="10" Margin="0,16,0,0">
+          <TextBlock Text="{Binding Error}" Foreground="{DynamicResource OrionErrorTextBrush}" TextWrapping="Wrap" IsVisible="{Binding HasError}" MaxHeight="90" />
+          <TextBlock Text="{Binding Status}" IsVisible="{Binding IsBusy}" TextWrapping="Wrap" Classes="muted" />
+          <ProgressBar IsVisible="{Binding IsBusy}" IsIndeterminate="{Binding Indeterminate}" Value="{Binding Progress}" Height="4" Foreground="{DynamicResource OrionAccentBrush}" />
+          <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="12" Margin="0,8,0,0">
+            <Button Content="{Binding Text[Cancel]}" Command="{Binding CancelOperationCommand}" IsVisible="{Binding IsBusy}" />
+            <Button Content="{Binding Text[Close]}" Command="{Binding CloseCreateCommand}" IsVisible="{Binding IsIdle}" />
+            <Button Classes="primary" Content="{Binding Text[Create]}" Command="{Binding CreateCommand}" IsEnabled="{Binding IsIdle}" />
+          </StackPanel>
+        </StackPanel>
+        </Grid>
+      </Border>
+    </Border>
+  </Grid>
+  </Grid>
+</Window>
