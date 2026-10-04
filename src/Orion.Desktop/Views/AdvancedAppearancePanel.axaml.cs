@@ -10,10 +10,16 @@ namespace Orion.Desktop.Views;
 public partial class AdvancedAppearancePanel : UserControl
 {
     private bool changingOpacity;
-    public AdvancedAppearancePanel()
+    private readonly Func<CompositorOpacityRule?> opacityRule;
+    private CompositorOpacityRule? pendingRule;
+    private bool pendingOpacity;
+    public AdvancedAppearancePanel() : this(OpacityRule) { }
+    public AdvancedAppearancePanel(Func<CompositorOpacityRule?> opacityRule)
     {
+        this.opacityRule = opacityRule;
         InitializeComponent();
         AttachedToVisualTree += (_, _) => RefreshOpacityState();
+        DetachedFromVisualTree += (_, _) => { if (!changingOpacity) ResetOpacityConfirmation(); };
     }
     private static CompositorOpacityRule? OpacityRule()
     {
@@ -26,41 +32,61 @@ public partial class AdvancedAppearancePanel : UserControl
     private void RefreshOpacityState()
     {
         if (DataContext is not AdvancedAppearanceViewModel model) return;
-        try { model.KeepWindowOpaque = OpacityRule()?.IsInstalled == true; }
+        try { model.KeepWindowOpaque = opacityRule()?.IsInstalled == true; }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException) { model.KeepWindowOpaque = false; }
     }
-    private async void ChangeDesktopOpacity(object? sender, RoutedEventArgs e)
+    private void ChangeDesktopOpacity(object? sender, RoutedEventArgs e)
     {
-        if (changingOpacity || DataContext is not AdvancedAppearanceViewModel model || TopLevel.GetTopLevel(this) is not MainWindow owner) return;
+        if (changingOpacity || DataContext is not AdvancedAppearanceViewModel model) return;
         var requested = DesktopOpacityToggle.IsChecked == true;
         DesktopOpacityToggle.SetCurrentValue(CheckBox.IsCheckedProperty, model.KeepWindowOpaque);
-        changingOpacity = true; DesktopOpacityToggle.IsEnabled = false;
         try
         {
-            var rule = OpacityRule();
-            if (rule is null)
-            {
-                model.KeepWindowOpaque = false;
-                await owner.ConfirmAsync(model.Text["DesktopTransparency"], model.DesktopEnvironmentName + "\n\n" + model.Text["DesktopRuleRequired"] + "\n\n" + model.DesktopOpacityGuide,
-                    model.Text["Close"], model.Text["Cancel"]);
-                return;
-            }
-            var message = (requested ? model.Text["DesktopRuleConsent"] : model.Text["DesktopRuleUndoConsent"]) + "\n\n" + rule.ConfigPath;
-            if (!await owner.ConfirmAsync(model.Text["DesktopTransparency"], message, model.Text[requested ? "DesktopRuleApply" : "DesktopRuleRemove"], model.Text["Cancel"])) return;
-            await rule.SetEnabledAsync(requested);
-            model.KeepWindowOpaque = rule.IsInstalled;
-            model.DesktopOpacityStatus = model.Text[requested ? "DesktopRuleApplied" : "DesktopRuleRemoved"];
+            pendingRule = opacityRule(); pendingOpacity = requested;
+            OpacityConfirmButton.IsVisible = pendingRule is not null;
+            OpacityConfirmButton.Content = model.Text[requested ? "DesktopRuleApply" : "DesktopRuleRemove"];
+            OpacityConfirmationText.Text = pendingRule is null
+                ? model.DesktopEnvironmentName + "\n\n" + model.Text["DesktopRuleRequired"] + "\n\n" + model.DesktopOpacityGuide
+                : model.Text[requested ? "DesktopRuleConsent" : "DesktopRuleUndoConsent"] + "\n\n" + pendingRule.ConfigPath;
+            OpacityConfirmation.IsVisible = true;
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.ComponentModel.Win32Exception or OperationCanceledException or ArgumentException)
         {
-            RefreshOpacityState();
-            model.DesktopOpacityStatus = model.Text["DesktopRuleFailed"];
-            await owner.ConfirmAsync(model.Text["DesktopTransparency"], model.Text["DesktopRuleFailed"] + "\n\n" + ex.Message, model.Text["Close"], model.Text["Cancel"]);
+            ResetOpacityConfirmation();
+            model.DesktopOpacityStatus = model.Text["DesktopRuleFailed"] + " " + ex.Message;
+        }
+    }
+    private void ResetOpacityConfirmation()
+    {
+        pendingRule = null; OpacityConfirmation.IsVisible = false;
+    }
+    private void CancelDesktopOpacity(object? sender, RoutedEventArgs e)
+    {
+        if (!changingOpacity) ResetOpacityConfirmation();
+    }
+    private async void ApplyDesktopOpacity(object? sender, RoutedEventArgs e)
+    {
+        if (changingOpacity || pendingRule is not { } rule || DataContext is not AdvancedAppearanceViewModel model) return;
+        var requested = pendingOpacity;
+        changingOpacity = true;
+        DesktopOpacityToggle.IsEnabled = OpacityConfirmButton.IsEnabled = OpacityCancelButton.IsEnabled = false;
+        try
+        {
+            // Validation, file reads and writes must never hold the UI dispatcher.
+            var installed = await Task.Run(async () => { await rule.SetEnabledAsync(requested); return rule.IsInstalled; });
+            model.KeepWindowOpaque = installed;
+            model.DesktopOpacityStatus = model.Text[requested ? "DesktopRuleApplied" : "DesktopRuleRemoved"];
+            ResetOpacityConfirmation();
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.ComponentModel.Win32Exception or OperationCanceledException or ArgumentException)
+        {
+            model.DesktopOpacityStatus = model.Text["DesktopRuleFailed"] + " " + ex.Message;
         }
         finally
         {
             DesktopOpacityToggle.SetCurrentValue(CheckBox.IsCheckedProperty, model.KeepWindowOpaque);
-            DesktopOpacityToggle.IsEnabled = true; changingOpacity = false;
+            DesktopOpacityToggle.IsEnabled = OpacityConfirmButton.IsEnabled = OpacityCancelButton.IsEnabled = true;
+            changingOpacity = false;
         }
     }
     private async void CopyDesktopRule(object? sender, RoutedEventArgs e)

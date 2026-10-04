@@ -5,6 +5,15 @@
       <StackPanel Spacing="12">
         <TextBlock Text="{Binding Text[DesktopTransparency]}" FontSize="18" FontWeight="SemiBold" />
         <CheckBox x:Name="DesktopOpacityToggle" Content="{Binding Text[KeepWindowOpaque]}" IsChecked="{Binding KeepWindowOpaque, Mode=OneWay}" Click="ChangeDesktopOpacity" />
+        <Border x:Name="OpacityConfirmation" IsVisible="False" Classes="panel">
+          <StackPanel Spacing="12">
+            <TextBlock x:Name="OpacityConfirmationText" TextWrapping="Wrap" />
+            <WrapPanel>
+              <Button x:Name="OpacityConfirmButton" Click="ApplyDesktopOpacity" Classes="primary" Margin="0,0,12,0" />
+              <Button x:Name="OpacityCancelButton" Content="{Binding Text[Cancel]}" Click="CancelDesktopOpacity" />
+            </WrapPanel>
+          </StackPanel>
+        </Border>
         <TextBlock Text="{Binding Text[KeepWindowOpaqueHint]}" Classes="muted" TextWrapping="Wrap" FontSize="12" />
         <TextBlock Text="{Binding DesktopOpacityStatus}" Classes="muted" TextWrapping="Wrap" FontSize="12" />
         <StackPanel Orientation="Horizontal" Spacing="8">

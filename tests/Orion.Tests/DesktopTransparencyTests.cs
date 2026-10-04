@@ -6,12 +6,86 @@ using Orion.Desktop.I18n;
 using Orion.Desktop.Theming;
 using Orion.Desktop.ViewModels;
 using Orion.Infrastructure.Storage;
+using Orion.Infrastructure.Linux;
+using Orion.Desktop.Views;
+using Avalonia.Interactivity;
 
 namespace Orion.Tests;
 
 [Collection("Avalonia UI")]
 public sealed class DesktopTransparencyTests
 {
+    [Fact]
+    public async Task OpacityRemovalUsesInlineConsentAndKeepsUiResponsiveDuringValidation()
+    {
+        using var session = HeadlessUnitTestSession.StartNew(typeof(UiTests));
+        await session.Dispatch<bool>(async () =>
+        {
+            using var dir = new TestDirectory();
+            var config = Path.Combine(dir.Root, "config.toml");
+            await File.WriteAllTextAsync(config, "# fixture\n" + CompositorOpacityRule.Block);
+            var started = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            var rule = new CompositorOpacityRule(config, async (_, _) => { started.TrySetResult(); await release.Task; });
+            var model = new AdvancedAppearanceViewModel(new(), new Localizer());
+            var panel = new AdvancedAppearancePanel(() => rule) { DataContext = model };
+            var window = new Window { Content = panel };
+            try
+            {
+                window.Show();
+                var toggle = panel.FindControl<CheckBox>("DesktopOpacityToggle")!;
+                var banner = panel.FindControl<Border>("OpacityConfirmation")!;
+                var apply = panel.FindControl<Button>("OpacityConfirmButton")!;
+                var cancel = panel.FindControl<Button>("OpacityCancelButton")!;
+                Assert.True(model.KeepWindowOpaque);
+                void RequestOff() { toggle.IsChecked = false; toggle.RaiseEvent(new RoutedEventArgs(Button.ClickEvent)); }
+                RequestOff();
+                Assert.True(banner.IsVisible);
+                Assert.True(window.IsEnabled); Assert.Empty(window.OwnedWindows);
+                Assert.True(rule.IsInstalled); // A click alone never authorizes changes.
+                cancel.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                Assert.False(banner.IsVisible); Assert.True(rule.IsInstalled);
+                RequestOff();
+                apply.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                await started.Task.WaitAsync(TimeSpan.FromSeconds(5));
+                Assert.True(window.IsEnabled); Assert.False(toggle.IsEnabled);
+                Assert.True(rule.IsInstalled);
+                release.TrySetResult();
+                for (var i = 0; i < 100 && !toggle.IsEnabled; i++) await Task.Delay(20);
+                Assert.True(toggle.IsEnabled); Assert.False(banner.IsVisible);
+                Assert.False(model.KeepWindowOpaque); Assert.False(rule.IsInstalled);
+                Assert.Equal("# fixture\n", await File.ReadAllTextAsync(config));
+            }
+            finally { release.TrySetResult(); window.Close(); }
+            return true;
+        }, CancellationToken.None);
+    }
+
+    [Fact]
+    public async Task ConfirmationIsVisibleAndCanBeDismissedWithoutDisablingOwnerPermanently()
+    {
+        using var session = HeadlessUnitTestSession.StartNew(typeof(UiTests));
+        await session.Dispatch<bool>(async () =>
+        {
+            var owner = new Orion.Desktop.Views.MainWindow();
+            owner.Show();
+            try
+            {
+                var pending = owner.ConfirmAsync("Desktop transparency", "Remove the Orion-only opacity exception?", "Remove", "Cancel");
+                Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+                var dialog = Assert.Single(owner.OwnedWindows);
+                Assert.True(dialog.IsVisible);
+                Assert.InRange(dialog.Bounds.Width, 150, 1000);
+                Assert.InRange(dialog.Bounds.Height, 100, 900);
+                dialog.Close(false);
+                Assert.False(await pending);
+                Assert.True(owner.IsEnabled);
+            }
+            finally { owner.Close(); }
+            return true;
+        }, CancellationToken.None);
+    }
+
     [Theory]
     [InlineData("umbriel", "umbriel")]
     [InlineData("Hyprland", "hyprland")]
