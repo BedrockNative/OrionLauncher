@@ -1,0 +1,74 @@
+using Orion.Desktop.Content;
+using Orion.Desktop.I18n;
+
+namespace Orion.Tests;
+
+public sealed class ChangelogTests
+{
+    [Theory]
+    [InlineData("en-US")]
+    [InlineData("pt-BR")]
+    public void BundledNotesIncludeCurrentReleaseLocalizedVersionsAndFullArchive(string language)
+    {
+        var text = new Localizer();
+        text.SetLanguage(language);
+        var entries = ChangelogCatalog.Read(text, language);
+        Assert.Equal(7, entries.Count);
+        Assert.False(entries[0].IsLegacy);
+        Assert.StartsWith("1.0.0", entries[0].Title);
+        Assert.StartsWith("# Orion Launcher 1.0.0", entries[0].Content);
+        Assert.Contains(language == "pt-BR" ? "Logs unificados e ao vivo" : "Unified live instance logs", entries[0].Content);
+        Assert.DoesNotContain("0.6.0", entries[0].Content);
+        Assert.DoesNotContain("development", entries[0].Title);
+        Assert.DoesNotContain("desenvolvimento", entries[0].Title);
+        Assert.StartsWith("0.5.0", entries[1].Title);
+        Assert.Contains("Historical release", ChangelogCatalog.Read(new Localizer(), "unknown")[1].Title);
+        Assert.All(entries.Skip(1), entry => Assert.True(entry.IsLegacy));
+        Assert.All(entries, entry => Assert.NotEmpty(ChangelogCatalog.Format(entry.Content)));
+        var catalogNotes = entries.Single(e => e.Title.StartsWith("0.4.2"));
+        Assert.Contains(language == "pt-BR" ? "Catálogo" : "catalog", catalogNotes.Content);
+        Assert.Contains("## 0.5.0", entries[^1].Content);
+        Assert.Contains("## Unreleased", entries[^1].Content);
+    }
+
+    [Fact]
+    public void UnknownLanguageFallsBackToCompleteEnglishReleaseNotes()
+    {
+        var text = new Localizer();
+        Assert.Equal(ChangelogCatalog.Read(text, "en-US")[0], ChangelogCatalog.Read(text, "unknown")[0]);
+    }
+
+    [Fact]
+    public void ReleaseTranslationsCoverTheSameSectionsAndHighlights()
+    {
+        var text = new Localizer();
+        var english = ChangelogCatalog.Read(text, "en-US")[0].Content;
+        var portuguese = ChangelogCatalog.Read(text, "pt-BR")[0].Content;
+        Assert.NotEqual(english, portuguese);
+        var englishBlocks = ChangelogCatalog.Format(english);
+        var portugueseBlocks = ChangelogCatalog.Format(portuguese);
+        Assert.Equal(englishBlocks.Select(b => (b.IsHeading, b.IsBullet)),
+            portugueseBlocks.Select(b => (b.IsHeading, b.IsBullet)));
+        foreach (var keyword in new[] { "GDK", "Marketplace", "WineGDK", "KDE", "CurseForge", "RTX Studio",
+            ".mcaddon", ".mcworld", "prime-run %command%", "orion.xodus.sock" })
+        {
+            Assert.Contains(keyword, english);
+            Assert.Contains(keyword, portuguese);
+        }
+        Assert.Contains("native binary modding system has been removed", english);
+        Assert.Contains("mods nativos/binários foi removido", portuguese);
+    }
+
+    [Fact]
+    public void FormatterPreservesWrappedContentAndRendersBasicNotesWithoutMarkdownMarkers()
+    {
+        var blocks = ChangelogCatalog.Format("# Heading\r\n\r\n- **Bold** and `code`\r\n  continued\r\n\r\nParagraph with [reference](https://example.test).\r\nNext line.\r\n---\r\n");
+        Assert.Equal(3, blocks.Count);
+        Assert.True(blocks[0].IsHeading);
+        Assert.Equal("Heading", blocks[0].Text);
+        Assert.True(blocks[1].IsBullet);
+        Assert.Equal("Bold and code continued", blocks[1].Text);
+        Assert.False(blocks[2].IsBullet);
+        Assert.Equal("Paragraph with reference (https://example.test). Next line.", blocks[2].Text);
+    }
+}
