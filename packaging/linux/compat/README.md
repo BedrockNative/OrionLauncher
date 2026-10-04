@@ -56,7 +56,8 @@ um contêiner reduz exposição, mas não substitui uma VM como limite de segura
   registro e D3D12.
 - HTML local renderizado pelo WebKit com seus subprocessos.
 - Janela real do launcher em Xvfb, via tar.gz e AppImage no modo sem FUSE.
-- Ausência de avisos/erros Fontconfig nas duas inicializações gráficas.
+- Ausência de avisos/erros Fontconfig nas duas inicializações gráficas e na criação
+  do prefixo Wine, com cache de fontes privado previamente criado.
 - Logs, duração por etapa, inventário de pacotes, imagem/digest e capturas XWD.
 
 Relatórios ficam em `artifacts/compatibility-<UTC>/`; `--output` permite escolher
@@ -88,6 +89,10 @@ Login real, keyring, áudio físico, GPU NVIDIA/AMD/Intel, RTX/DLSS, desempenho,
 Wayland/compositor e AppImage montado via FUSE requerem testes complementares.
 
 ## Execução registrada
+
+Consulte [a validação das melhorias de inicialização e Fontconfig](RESULTS-REVIEW-2026-10-04.md):
+AppImage e tar.gz passaram nas quatro distros, com o código atualizado, capturas
+inspecionadas e logs Wine/GUI sem avisos ou erros Fontconfig.
 
 Consulte [a validação da redução de bibliotecas centrais](RESULTS-CORE-LIBS-2026-10-04.md):
 AppImage e tar.gz passaram em Arch, Debian 13.7, Fedora 44 e Ubuntu 24.04.5,
