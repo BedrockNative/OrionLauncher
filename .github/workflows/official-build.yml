@@ -45,6 +45,7 @@ jobs:
       - name: Validate without credentials
         run: |
           python3 -m unittest discover -s packaging/tests -v
+          python3 -m unittest discover -s .github/tests -v
           dotnet restore OrionLauncher.slnx
           dotnet test OrionLauncher.slnx -c Release --no-restore -m:1
           dotnet build tools/Orion.BuildCredentials -c Release
