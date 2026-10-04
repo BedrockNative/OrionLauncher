@@ -1,73 +1,61 @@
-# Orion Launcher
+<p align="center">
+  <img src="src/Orion.Desktop/Assets/orion.svg" width="88" alt="Orion logo">
+</p>
 
-A Minecraft Bedrock launcher for Linux.
+<h1 align="center">Orion Launcher</h1>
+<p align="center"><strong>Minecraft Bedrock, at home on Linux.</strong></p>
+<p align="center">
+  <a href="https://github.com/BedrockNative/OrionLauncher/releases"><img src="https://img.shields.io/github/v/release/BedrockNative/OrionLauncher?color=91cbbb" alt="Latest release"></a>
+  <img src="https://img.shields.io/badge/platform-Linux_x86__64-91cbbb" alt="Linux x86_64">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-91cbbb" alt="MIT license"></a>
+</p>
 
-Independent instances, an isolated Xodus account profile, WineGDK runtime updates,
-optional per-instance Linux application shortcuts (off by default), and a launcher that can stay in the background.
+Orion is a **Minecraft Bedrock launcher for Linux**, bringing the game and its
+online services into a native-like desktop experience through our own **WineGDK**
+fork. Manage instances, Microsoft accounts, addons, textures and worlds in one place.
 Available in English and Brazilian Portuguese.
 
-## Run
+> Practically native in daily use — not an official Linux port. Minecraft still
+> runs through WineGDK. A Minecraft for Windows license and compatible graphics
+> drivers are required; support varies with the game version, hardware and service.
 
-Building requires Linux x86_64, .NET SDK 10, CMake and MinGW-w64 C++.
-Playing requires Vulkan drivers and a Minecraft for Windows license.
+## 🚀 Get started
 
-```sh
-dotnet run --project src/Orion.Desktop
-```
+Download an **AppImage** or **tar.gz** from [Releases](https://github.com/BedrockNative/OrionLauncher/releases),
+sign in on **Account**, and create your first instance. Portable releases include
+the launcher runtime stack; no .NET SDK is needed to play.
 
-Sign in on **Account**, then create an instance from the version catalog.
-Follow background installations on **Downloads**; interrupted work resumes next time.
-Official portable packages include a pinned, tested BedrockNative runtime stack;
-runtime updates remain available from the launcher. Development builds download
-the latest stable runtimes when needed.
-
-Manage worlds, addons and textures from **Content** in the main navigation.
-Share packs between instances without duplicating them; worlds stay independent.
-Official keyed builds also offer CurseForge discovery and installation;
-[local builds can use your own key](docs/en_US/curseforge-build.md#local-development).
-
-**RTX Studio** browses BetterRTX presets and Vanilla RTX packs, installs them per
-instance, and offers reversible shader changes and ray-tracing launch preferences.
-
-Automated checks cover the launcher; compatibility
-with Microsoft services and individual game versions also depends on Xodus and WineGDK.
-
-[Setup and usage](docs/en_US/getting-started.md) ·
-[Architecture](docs/en_US/architecture.md) ·
-[Development](docs/en_US/development.md) ·
-[Releases and packaging](RELEASING.md) ·
-[Content](docs/en_US/content.md) ·
-[RTX](docs/en_US/rtx.md) ·
-[Appearance](docs/en_US/appearance-options.md) ·
+[Setup & usage](docs/en_US/getting-started.md) · [Linux requirements](RELEASING.md#stack-incluída-e-limites-do-sistema) ·
 [Changelog](CHANGELOG.md)
 
-## Questions, bugs and suggestions
+## 🧭 Roadmap
+
+Checked items are implemented, not a guarantee for every game version or device.
+
+- [x] **Instance manager** — independent instances and Microsoft accounts.
+- [x] **Our own WineGDK fork** — deep Linux desktop integration for a native-like game experience.
+- [x] **Native Xbox account sign-in** — Microsoft login directly in the game.
+- [x] **Online features** — friends' worlds, servers, parties, Realms, Marketplace purchases/downloads, friend requests and achievements.
+- [x] **Resource manager** — manage addons, textures and maps without navigating complicated folders. *Experimental.*
+- [x] **RTX integration** — Vanilla RTX, BetterRTX and NVIDIA DLSS. *Experimental; compatible hardware and drivers required.*
+- [x] **Native file picker** — import custom skins, worlds and textures, plus import/export of `.mcstructure` files.
+- [ ] **Native mod integration** — under review; a redesigned system is planned. Bedrock addons are already supported.
+
+## 📚 Explore & contribute
+
+[Content & CurseForge](docs/en_US/content.md) · [RTX Studio](docs/en_US/rtx.md) ·
+[Appearance](docs/en_US/appearance-options.md) · [Architecture](docs/en_US/architecture.md)
+
+Contributions go to **`development`**. **`main`** is the publication branch and
+accepts release/configuration PRs only from this repository's `development`.
+See [contributing](docs/en_US/contributing.md), [development setup](docs/en_US/development.md)
+and [release workflow](RELEASING.md).
+
+## 💬 Questions, bugs & suggestions
 
 [Open an issue](https://github.com/BedrockNative/OrionLauncher/issues/new/choose)
-and choose **Bug**, **Question / Pergunta** or **Suggestion / Sugestão**.
-Portuguese and English are welcome. The forms apply the existing `bug`,
-`question` and `enhancement` labels respectively.
-
-For bugs, include the Orion version, operating system/distribution and version,
-kernel and version, desktop/window manager, display session, steps to reproduce
-and expected behavior. Screenshots, videos and relevant logs are encouraged;
-remove credentials and personal information before uploading them.
-
-Maintainers: forms live in `.github/ISSUE_TEMPLATE/` and become available when
-merged into the repository's default branch. Keep the three labels above present
-in GitHub; templates reference labels but do not create them.
-
-The lightweight **Issue classification** workflow handles issues opened/reopened
-or relabeled without one of those categories, including issues submitted through
-the API. It adds `needs-classification` (creating that label if necessary) and
-posts one bilingual reminder per issue. Authors without label permissions can
-reply with the category for a maintainer to apply. Once a category is applied,
-the pending label is removed automatically; other labels and comments are kept.
-Issues are never closed automatically. This is a triage safeguard, not a block
-on API submission or validation of the report's contents. It does not run on
-development commits and does not build the launcher or access release secrets.
-
-Local automation tests: `python3 -m unittest discover -s .github/tests -v`.
+and choose **Bug**, **Question** or **Suggestion**. English and Portuguese are welcome.
+Reporting instructions: [English](docs/en_US/issues.md) · [Português](docs/pt_BR/issues.md).
 
 ## Credits
 

@@ -122,8 +122,12 @@ restore e testes não a recebem. O arquivo temporário em `obj/` é removido mes
 se o publish falhar. Só os pacotes finais são enviados como artifacts.
 
 O ambiente deve continuar restrito à `main` e sujeito a aprovação. A permissão
-`contents: write` existe apenas no job final de publicação. Não há
-`pull_request_target`, acesso a secrets por PR ou push de commits automático.
+`contents: write` existe apenas no job final de publicação. PRs não recebem
+credenciais de release e não há push de commits automático. O workflow separado
+**Main source policy** usa `pull_request_target` exclusivamente para ler metadados
+e fechar PRs de origem incorreta. Executa somente código da base confiável, nunca
+da branch do PR, com `GITHUB_TOKEN` limitado a leitura de código e escrita de PRs;
+não acessa o ambiente de release nem o secret CurseForge.
 Ofuscação **não é sigilo**: uma chave embutida pode ser recuperada de um cliente
 distribuído. Consulte [a política de credenciais](docs/en_US/curseforge-build.md).
 

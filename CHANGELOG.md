@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased — 1.0.1 draft
+
+Documentation and contribution-policy updates: [English](docs/en_US/changelog/release/v1.0.1.md) ·
+[Português (Brasil)](docs/pt_BR/changelog/release/v1.0.1.md).
+This draft does not change the published version or trigger a release.
+
 ## 1.0.0
 
 Orion 1.0.0 is a complete rewrite and the next official release after 0.5.0.
