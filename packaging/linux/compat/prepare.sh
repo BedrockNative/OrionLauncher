@@ -7,7 +7,8 @@ case "${1:?Distribution family required}" in
     apt-get update
     DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
       python3 ca-certificates file binutils dbus-daemon xvfb xauth x11-utils x11-apps passwd \
-      libgl1 libegl1 libgles2 libgbm1 libvulkan1 mesa-vulkan-drivers
+      libgl1 libegl1 libgles2 libgbm1 libvulkan1 mesa-vulkan-drivers \
+      libwayland-client0 libwayland-server0 libwayland-cursor0 libwayland-egl1
     dpkg-query -W -f='${Package}=${Version}\n' > /opt/orion-tests/packages.txt
     ;;
   arch)

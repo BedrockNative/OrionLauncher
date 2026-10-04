@@ -22,7 +22,9 @@ limites de 4 CPUs, 6 GiB de RAM e 512 processos por teste. Ajuste com `--cpus`,
 - Bases oficiais: `archlinux:base`, `debian:13-slim`,
   `registry.fedoraproject.org/fedora:44`; opcionalmente `ubuntu:24.04`.
 - Apenas ferramentas de teste (Python, ELF, Xvfb, captura X11), D-Bus e a base
-  gráfica de software Mesa/Vulkan/OpenGL/EGL/OpenGL ES.
+  gráfica de software Mesa/Vulkan/OpenGL/EGL/OpenGL ES e bibliotecas Wayland
+  do host (client/server/cursor/EGL, sem instalar compositor). A ABI gráfica
+  permanece do sistema, não da stack privada do launcher.
 - **Sem instalar .NET, Wine, GTK ou WebKit**. O inventário é verificado e salvo;
   bibliotecas comuns podem ser dependências transitivas do próprio desktop.
 

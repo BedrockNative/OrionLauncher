@@ -76,6 +76,49 @@ def bundle_wine_addons(app, lock, cache):
         copy_tree(download(item, cache), data / item["subdir"] / item["fileName"])
 
 
+def build_reflex_layer(lock, cache, work, app):
+    # The upstream Linux binary uses newer GLIBCXX symbols than Ubuntu 24.04.
+    # Rebuild only this ELF from the SAME release; keep all Windows DLLs intact.
+    manifests = list((app / "runtimes/winegdk").glob("*/share/wine/native/dxvk-nvapi/MANIFEST.json"))
+    if len(manifests) != 1:
+        raise ValueError("Expected one DXVK-NVAPI manifest")
+    manifest_path = manifests[0]
+    manifest = json.loads(manifest_path.read_text())
+    if manifest["version"] != lock["dxvk-nvapi-source"]["tag"]:
+        raise ValueError("DXVK-NVAPI source must match the bundled Wine release")
+    relative = "layer/libdxvk_nvapi_vkreflex_layer.so"
+    target = manifest_path.parent / relative
+    if digest(target) != manifest["files"][relative]:
+        raise ValueError("Bundled Reflex layer does not match its upstream manifest")
+    sources = work / "reflex-source"
+    sources.mkdir()
+    for name, destination in (("dxvk-nvapi-source", sources),
+                              ("vulkan-headers-source", sources / "headers"),
+                              ("vkroots-source", sources / "roots")):
+        destination.mkdir(exist_ok=True)
+        with tarfile.open(download(lock[name], cache)) as archive:
+            archive.extractall(destination, filter="data")
+    source = next(sources.glob("dxvk-nvapi-*"))
+    copy_tree(next((sources / "headers").iterdir()), source / "external/Vulkan-Headers")
+    copy_tree(next((sources / "roots").iterdir()), source / "external/vkroots")
+    build_dir = work / "reflex-build"
+    run("meson", "setup", build_dir, source / "layer", "--buildtype=release")
+    run("meson", "compile", "-C", build_dir)
+    copy_tree(build_dir / target.name, target)
+    manifest["portableRebuild"] = {
+        "component": relative,
+        "upstreamSha256": manifest["files"][relative],
+        "source": lock["dxvk-nvapi-source"],
+        "buildBase": "Ubuntu 24.04",
+    }
+    manifest["files"][relative] = digest(target)
+    manifest_path.write_text(json.dumps(manifest, indent=2) + "\n")
+    licenses = app.parents[2] / "usr/share/licenses/dxvk-nvapi-portable"
+    for name in ("dxvk-nvapi-source", "vulkan-headers-source", "vkroots-source"):
+        copy_tree(cache / lock[name]["sha256"], licenses / (name + ".tar.gz"))
+    copy_tree(HERE / "package.py", licenses / "build-recipe.py")
+
+
 def build_ffmpeg(item, cache, work, app):
     # WineGDK needs ABI 63/61; Ubuntu's FFmpeg 6 ABI cannot be substituted with
     # symlinks. Build the actual upstream ABI against our oldest supported glibc.
@@ -195,6 +238,7 @@ def build(published, output):
                 archive.extractall(runtime, filter="data")
             (runtime / "version.json").write_text(json.dumps(lock[name]["tag"]))
         bundle_wine_addons(app, lock, cache)
+        build_reflex_layer(lock, cache, work, app)
         build_ffmpeg(lock["ffmpeg"], cache, work, app)
         # Debian keeps the historic libpcap SONAME .0.8 for the same upstream
         # libpcap 1.x ABI. Adapt only Wine's packet capture module to that name.
@@ -227,6 +271,12 @@ def build(published, output):
 <cachedir prefix="xdg">fontconfig</cachedir><include ignore_missing="yes">conf.d</include></fontconfig>
 ''')
         packages = bundle_native(appdir, app)
+        # bundle_native adds RUNPATH after rebuilding; record the final ELF hash.
+        for manifest_path in (app / "runtimes/winegdk").glob("*/share/wine/native/dxvk-nvapi/MANIFEST.json"):
+            manifest = json.loads(manifest_path.read_text())
+            relative = manifest["portableRebuild"]["component"]
+            manifest["files"][relative] = digest(manifest_path.parent / relative)
+            manifest_path.write_text(json.dumps(manifest, indent=2) + "\n")
         # Attribution for all system packages in the build environment, including
         # helper/resource packages and transitive libraries. Never copy user data.
         for copyright in Path("/usr/share/doc").glob("*/copyright"):

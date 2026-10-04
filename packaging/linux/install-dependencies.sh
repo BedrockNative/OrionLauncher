@@ -3,7 +3,7 @@ set -euo pipefail
 # Run in Ubuntu 24.04, not on the user's host.
 apt-get update
 apt-get install -y --no-install-recommends \
-  ca-certificates curl python3 cmake build-essential nasm pkg-config zlib1g-dev g++-mingw-w64-x86-64 patchelf binutils \
+  ca-certificates curl python3 cmake meson ninja-build build-essential nasm pkg-config zlib1g-dev g++-mingw-w64-x86-64 patchelf binutils \
   file squashfs-tools desktop-file-utils xdg-utils xvfb xauth dbus-x11 \
   libicu74 libssl3t64 libkrb5-3 libgssapi-krb5-2 libfontconfig1 fonts-dejavu-core \
   libx11-6 libice6 libsm6 libxrandr2 libxi6 libxcursor1 libxinerama1 libxrender1 \

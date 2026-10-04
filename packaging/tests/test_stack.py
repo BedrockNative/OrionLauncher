@@ -10,6 +10,27 @@ import package
 
 
 class StackTests(unittest.TestCase):
+    def test_reflex_rebuild_rejects_mismatched_runtime_before_download(self):
+        lock = {"dxvk-nvapi-source": {"tag": "0.9.2"}}
+        with tempfile.TemporaryDirectory() as directory:
+            app = Path(directory) / "app"
+            folder = app / "runtimes/winegdk/wine-test/share/wine/native/dxvk-nvapi"
+            folder.mkdir(parents=True)
+            manifest = folder / "MANIFEST.json"
+            manifest.write_text(json.dumps({"version": "other"}))
+            with patch.object(package, "download") as download:
+                with self.assertRaisesRegex(ValueError, "source must match"):
+                    package.build_reflex_layer(lock, Path(directory), Path(directory), app)
+                download.assert_not_called()
+            (folder / "layer").mkdir()
+            (folder / "layer/libdxvk_nvapi_vkreflex_layer.so").write_bytes(b"changed")
+            manifest.write_text(json.dumps({"version": "0.9.2", "files": {
+                "layer/libdxvk_nvapi_vkreflex_layer.so": "0" * 64}}))
+            with patch.object(package, "download") as download:
+                with self.assertRaisesRegex(ValueError, "upstream manifest"):
+                    package.build_reflex_layer(lock, Path(directory), Path(directory), app)
+                download.assert_not_called()
+
     def test_driver_wayland_abi_is_supplied_by_host(self):
         for name in ("libwayland-client.so.0", "libwayland-server.so.0",
                      "libwayland-cursor.so.0", "libwayland-egl.so.1", "libEGL.so.1"):

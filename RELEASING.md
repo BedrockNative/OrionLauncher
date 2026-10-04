@@ -61,6 +61,11 @@ pelo launcher. EventPipe, dumps de crash e logs do launcher/jogo são preservado
 O FFmpeg exigido pelo WineGDK é compilado a partir da versão e checksum fixados,
 contra a mesma base Ubuntu; não são feitos aliases entre ABIs de FFmpeg diferentes.
 O código-fonte correspondente e a receita ficam em `usr/share/licenses/ffmpeg`.
+A camada Linux Reflex do DXVK-NVAPI também é recompilada, sem alterar suas DLLs
+Windows, a partir da mesma versão incluída no WineGDK. Isso evita exigir símbolos
+GLIBCXX de um compilador mais novo que a base suportada. Fontes, headers e receita
+são fixados por checksum e incluídos em `usr/share/licenses/dxvk-nvapi-portable`;
+o manifesto registra a origem e a recompilação.
 Os runtimes incluídos são usados sem redownload inicial; **Atualizar runtimes**
 instala atualizações no diretório de dados do usuário, sem modificar o AppImage.
 Atualizações futuras podem exigir uma stack nativa mais nova e uma nova release.

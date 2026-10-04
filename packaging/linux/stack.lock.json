@@ -35,6 +35,21 @@
     "url": "https://ffmpeg.org/releases/ffmpeg-9.0.2.tar.xz",
     "sha256": "8c3850283eb25fa026482078a04051e0be17347b09ef81a0849bec15a96e002e"
   },
+  "dxvk-nvapi-source": {
+    "tag": "0.9.2",
+    "url": "https://codeload.github.com/jp7677/dxvk-nvapi/tar.gz/f9fdf268e888d17ae9875a4f01908164ff05f740",
+    "sha256": "16ecace6c927ba2bc05152a674c9364781d16a953ce8049192f6a54b125024db"
+  },
+  "vulkan-headers-source": {
+    "tag": "2cd90f9d20df57eac214c148f3aed885372ddcfe",
+    "url": "https://codeload.github.com/KhronosGroup/Vulkan-Headers/tar.gz/2cd90f9d20df57eac214c148f3aed885372ddcfe",
+    "sha256": "e3865307e665f6a4ac4f7bbca7b3ba95e4191c7f8adf9f04b084ef514a2454e9"
+  },
+  "vkroots-source": {
+    "tag": "ee76e620798612c52fb8dcc32a1058a0a3538930",
+    "url": "https://codeload.github.com/misyltoad/vkroots/tar.gz/ee76e620798612c52fb8dcc32a1058a0a3538930",
+    "sha256": "efa6759a42b05b1068d73ce660df35616067bec190bcdbad69abb05aa2bcbe37"
+  },
   "appimagetool": {
     "tag": "1.9.1",
     "url": "https://github.com/AppImage/appimagetool/releases/download/1.9.1/appimagetool-x86_64.AppImage",
