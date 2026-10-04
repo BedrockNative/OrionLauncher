@@ -84,7 +84,11 @@ Wayland/compositor e AppImage montado via FUSE requerem testes complementares.
 
 ## Execução registrada
 
-Consulte [o resultado de 2026-10-04](RESULTS-2026-10-04.md): o Debian passou,
-mas Arch e Fedora revelaram um conflito entre o Mesa do sistema e o Wayland
-incluído no pacote. Esses artefatos **não estão validados nas três distros**.
-O relatório se refere aos hashes registrados, não automaticamente a builds futuros.
+Consulte [a validação local da 1.0.0](RESULTS-1.0.0-2026-10-04.md): os mesmos
+pacotes passaram em Arch, Debian 13 e Fedora 44, após corrigir a ABI Wayland,
+recompilar a camada Reflex na base suportada e completar a base gráfica Fedora.
+O relatório registra hashes, capturas, a primeira falha Fedora e sua repetição.
+
+O [resultado anterior](RESULTS-2026-10-04.md) fica preservado como diagnóstico do
+conflito Mesa/Wayland. Cada relatório se refere somente aos hashes registrados,
+não automaticamente a novos builds ou aos artefatos gerados pelo Actions.
