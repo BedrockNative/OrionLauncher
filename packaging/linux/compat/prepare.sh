@@ -20,7 +20,8 @@ case "${1:?Distribution family required}" in
   fedora)
     dnf install -y --setopt=install_weak_deps=False python3 ca-certificates file binutils \
       dbus-daemon xorg-x11-server-Xvfb xorg-x11-xauth xwininfo xwd shadow-utils \
-      libglvnd-glx libglvnd-egl libglvnd-gles mesa-dri-drivers mesa-vulkan-drivers vulkan-loader
+      libglvnd-glx libglvnd-egl libglvnd-gles mesa-dri-drivers mesa-vulkan-drivers vulkan-loader \
+      libwayland-client libwayland-server libwayland-cursor libwayland-egl
     rpm -qa --qf '%{NAME}=%{VERSION}-%{RELEASE}\n' | sort > /opt/orion-tests/packages.txt
     ;;
   *) exit 2 ;;
