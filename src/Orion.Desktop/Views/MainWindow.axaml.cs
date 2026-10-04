@@ -123,10 +123,9 @@ public partial class MainWindow : Window, IWindowDialogs
 
     public async Task OpenFolderAsync(string path)
     {
-        var directory = new DirectoryInfo(Path.GetFullPath(path));
-        if (!directory.Exists) throw new DirectoryNotFoundException(directory.FullName);
-        if (!await Launcher.LaunchDirectoryInfoAsync(directory))
-            throw new IOException($"Could not open the file manager: {directory.FullName}");
+        var model = DataContext as MainViewModel;
+        await new Orion.Infrastructure.Linux.DesktopFolderLauncher().OpenAsync(path,
+            model?.SelectedFileManager ?? "system", model is null ? null : model.ReportFolderError);
     }
 
     public async Task<string?> ChooseFolderAsync(string title, string hint, IReadOnlyList<FolderChoice> choices, string confirm, string cancel)

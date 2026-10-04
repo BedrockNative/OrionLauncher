@@ -24,6 +24,16 @@
               <CheckBox Content="{Binding Text[Background]}" IsChecked="{Binding KeepInBackground}" />
             </StackPanel>
           </Border>
+          <Border Classes="panel" Margin="0,0,8,0" VerticalAlignment="Top">
+              <StackPanel Spacing="10">
+                <TextBlock Text="{Binding Text[FileManager]}" FontWeight="SemiBold" />
+                <TextBlock Text="{Binding Text[FileManagerHint]}" Classes="muted" TextWrapping="Wrap" />
+                <ComboBox x:Name="FileManagerPicker" ItemsSource="{Binding FileManagers}" SelectedIndex="{Binding FileManagerIndex}" MinWidth="280" AutomationProperties.Name="{Binding Text[FileManager]}">
+                  <ComboBox.ItemTemplate><DataTemplate x:DataType="vm:FileManagerChoiceViewModel"><TextBlock Text="{Binding Label}" /></DataTemplate></ComboBox.ItemTemplate>
+                </ComboBox>
+                <Button Content="{Binding Text[FileManagerRefresh]}" Command="{Binding RefreshFileManagersCommand}" HorizontalAlignment="Left" Classes="subtle" />
+              </StackPanel>
+          </Border>
           <Border Classes="panel" Margin="0,0,8,0" VerticalAlignment="Top"><StackPanel Spacing="14">
               <TextBlock Text="{Binding Text[Logs]}" FontWeight="SemiBold" />
               <TextBlock Text="{Binding Text[ClearAllLogsConfirm]}" Classes="muted" TextWrapping="Wrap" />

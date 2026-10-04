@@ -4,6 +4,7 @@ public sealed record LauncherSettings(string Language = "en-US", bool KeepInBack
     string ThemeMode = "dark", string ColorPalette = "theme", string VisualTheme = "orion")
 {
     public AppearanceSettings Appearance { get; init; } = new();
+    public string FileManager { get; init; } = "system";
 }
 
 public sealed class SettingsStore(AppPaths paths)

@@ -1,4 +1,9 @@
 {
+  "FileManager": "File manager",
+  "FileManagerSystem": "System default",
+  "FileManagerNotInstalled": "Not installed",
+  "FileManagerHint": "Choose the application used to open instances, com.mojang, content and logs. This does not change your system default. Install missing applications through your distribution.",
+  "FileManagerRefresh": "Refresh installed applications",
   "ContentExperimentalTitle": "Content management · experimental",
   "ContentExperimentalNotice": "Managing and importing textures, addons and maps (worlds) are experimental features. They may cause bugs or not work correctly. Back up your worlds and content before making changes.",
   "MangoHudIntro": "Performance overlay for this instance. Uses the MangoHud installed on your system with the game's Vulkan renderer (DXVK/VKD3D). Nothing is installed automatically.",
