@@ -1,0 +1,38 @@
+name: Suggestion / Sugestão
+description: Suggest a feature or improvement / Sugira um recurso ou melhoria.
+title: "[Suggestion]: "
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        English and Portuguese are welcome. / Você pode escrever em português ou inglês.
+        Check whether a similar suggestion already exists. / Confira se já existe uma sugestão semelhante.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Need or problem / Necessidade ou problema
+      description: What would this improve? / O que essa sugestão ajudaria a melhorar?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Suggested solution / Solução sugerida
+      description: Describe how you would like it to work. / Explique como gostaria que funcionasse.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives / Alternativas
+      description: Are there other ways to meet this need? / Existem outras formas de atender essa necessidade?
+    validations:
+      required: false
+  - type: textarea
+    id: references
+    attributes:
+      label: Examples and references / Exemplos e referências
+      description: Optionally add links, mockups, images or videos. / Se quiser, adicione links, mockups, imagens ou vídeos.
+    validations:
+      required: false

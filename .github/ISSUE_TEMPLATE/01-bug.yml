@@ -1,0 +1,113 @@
+name: Bug / Relatar bug
+description: Report something that is not working / Relate algo que não funciona.
+title: "[Bug]: "
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        English and Portuguese are welcome. / Você pode escrever em português ou inglês.
+        Please search existing issues first. / Confira se o problema já foi relatado.
+        Do not share passwords, tokens, API keys or account data in logs or screenshots.
+        Não compartilhe senhas, tokens, chaves de API ou dados de contas em logs e capturas.
+  - type: input
+    id: launcher-version
+    attributes:
+      label: Orion version / Versão do Orion
+      description: Check About; for development builds, include the commit if known. / Veja Sobre; em builds de desenvolvimento, informe o commit se souber.
+      placeholder: "1.0.0 / development + commit"
+    validations:
+      required: true
+  - type: dropdown
+    id: installation
+    attributes:
+      label: Installation format / Formato da instalação
+      options:
+        - AppImage
+        - tar.gz
+        - Source build / Compilado do código-fonte
+        - Other or unknown / Outro ou não sei
+    validations:
+      required: true
+  - type: input
+    id: operating-system
+    attributes:
+      label: Operating system and version / Sistema operacional e versão
+      description: Include your distribution and release. / Informe a distribuição e sua versão.
+      placeholder: "Debian 13, Fedora 44, Arch Linux (rolling, atualizado em AAAA-MM-DD)…"
+    validations:
+      required: true
+  - type: input
+    id: kernel
+    attributes:
+      label: Kernel and version / Kernel e versão
+      description: On Linux, run uname -sr in a terminal. / No Linux, execute uname -sr no terminal.
+      placeholder: "Linux 6.x.y-arch1-1"
+    validations:
+      required: true
+  - type: input
+    id: desktop-window-manager
+    attributes:
+      label: Desktop and window manager / Ambiente e gerenciador de janelas
+      description: Include versions if known; write unknown if unsure. / Inclua as versões se souber; caso contrário, escreva que não sabe.
+      placeholder: "KDE Plasma / KWin, GNOME / Mutter, Hyprland, Sway, i3…"
+    validations:
+      required: true
+  - type: dropdown
+    id: display-session
+    attributes:
+      label: Display session / Sessão gráfica
+      options:
+        - Wayland
+        - X11
+        - Other or unknown / Outra ou não sei
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened? / O que aconteceu?
+      description: Describe the bug and any error message. / Descreva o problema e as mensagens de erro.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to reproduce / Como reproduzir
+      description: Include whether it happens every time. / Informe também se acontece sempre.
+      placeholder: |
+        1. Open… / Abra…
+        2. Select… / Selecione…
+        3. Click… / Clique…
+        4. The problem appears… / O problema acontece…
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior / Comportamento esperado
+      description: What should have happened? / O que deveria ter acontecido?
+    validations:
+      required: true
+  - type: textarea
+    id: game-and-gpu
+    attributes:
+      label: Game, runtimes and GPU / Jogo, runtimes e GPU
+      description: For game or graphics issues, include Minecraft, WineGDK and Xodus versions, GPU/driver, and any packs, shaders or custom launch settings. / Para bugs no jogo ou gráficos, informe versões do Minecraft, WineGDK e Xodus, GPU/driver, pacotes, shaders e opções de inicialização personalizadas.
+    validations:
+      required: false
+  - type: textarea
+    id: attachments
+    attributes:
+      label: Screenshots or video / Fotos ou vídeo
+      description: Recommended when possible. Drag, paste or attach images/videos here to show the problem. Hide personal information first. / Recomendado quando possível. Arraste, cole ou anexe imagens/vídeos aqui mostrando o problema. Oculte informações pessoais antes.
+    validations:
+      required: false
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant logs / Logs relevantes
+      description: Paste the relevant launcher or instance logs, with secrets and personal data removed. You can also attach a sanitized log file in the field above. / Cole os logs relevantes do launcher ou da instância, sem segredos ou dados pessoais. Também pode anexar um arquivo de log revisado no campo acima.
+      render: text
+    validations:
+      required: false

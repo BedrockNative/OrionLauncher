@@ -1,0 +1,32 @@
+name: Question / Pergunta
+description: Ask about setup or usage / Tire dúvidas sobre configuração e uso.
+title: "[Question]: "
+labels: [question]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        English and Portuguese are welcome. / Você pode escrever em português ou inglês.
+        Check the README and existing issues first. Never share credentials or account data.
+        Confira o README e as issues existentes. Nunca compartilhe credenciais ou dados de contas.
+  - type: textarea
+    id: question
+    attributes:
+      label: Your question / Sua pergunta
+      description: What would you like to know or do? / O que você gostaria de saber ou fazer?
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Context / Contexto
+      description: If relevant, include the Orion version, operating system and related feature. / Se relevante, informe a versão do Orion, sistema operacional e recurso relacionado.
+    validations:
+      required: false
+  - type: textarea
+    id: tried
+    attributes:
+      label: What have you tried? / O que já tentou?
+      description: Mention documentation you checked or steps you tried. / Informe a documentação consultada ou os passos que já tentou.
+    validations:
+      required: false
