@@ -167,13 +167,16 @@ when resizing the window; lower cards remain reachable by scrolling.
 Installation, prefix preparation, game output and Xodus service diagnostics emitted
 during the operation are appended to `logs/instance-<uuid>.log`. The console displays
 only the last 128 KiB to keep memory bounded; the complete history remains on disk.
-Each running game owns its service, so its journal contains only that session's
-service diagnostics, marked as **Xodus service**. Authentication command logs
+Xodus services start with the launcher and remain alive between games, with
+separate services for different accounts. Active instance journals include their
+account service’s diagnostics, marked as **Xodus service**. Authentication command logs
 remain separate and are not copied into instance journals. Review/redact logs before
 sharing: upstream tools can include paths or account-related information.
 
-Before play, Orion configures Wine's crash debugger in the **instance's private prefix**
-to send its backtrace to the journal instead of a temporary graphical crash dialog.
+Orion launches the game without preparatory `wineboot`, `wine reg add` or
+`wineserver -w` calls. Wine’s crash-dialog setting is left unchanged; backtraces
+from a graphical debugger may remain in its report rather than the journal.
+**Launch timing** entries measure each preparation stage in milliseconds.
 Unhandled Wine exceptions are reported even if the launch wrapper returns exit code zero.
 Game logging defaults keep Wine errors and route DXVK/VKD3D output to the same journal;
 explicit environment overrides in Launch options still take precedence.
@@ -257,12 +260,20 @@ background installation job and survive interruption/resume.
   not the launcher, login, background service, or prefix preparation. Account,
   socket and prefix variables remain managed by Orion. This is not a security
   sandbox. Values are stored as ordinary instance settings: do not put secrets here.
+- **MangoHud:** **Use system configuration** defaults to enabled when Orion detects
+  a global MangoHud file or environment configuration. It disables the instance’s
+  metric and position controls without erasing saved choices. Turn it off to apply
+  the instance’s metrics instead. Orion does not modify the system configuration.
 - **Resolution / fullscreen (coming soon):** these controls are placeholders.
   Their values are saved for a future implementation but do not affect game launch,
   screen resolution, fullscreen mode, or environment variables. No additional
   display tool is required or launched. Use Minecraft's own video settings for now.
 
 **Reset defaults → Save** clears these settings. **Cancel** discards edits.
+
+Orion checks for Xodus and WineGDK updates in the background on startup. Disable
+**Settings → Runtimes → Check Xodus and WineGDK updates on startup** to opt out.
+The check only reads release metadata; use **Update runtimes** to install updates.
 
 ## Paths
 

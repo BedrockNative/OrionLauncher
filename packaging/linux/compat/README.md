@@ -25,6 +25,10 @@ limites de 4 CPUs, 6 GiB de RAM e 512 processos por teste. Ajuste com `--cpus`,
   gráfica de software Mesa/Vulkan/OpenGL/EGL/OpenGL ES e bibliotecas Wayland
   do host (client/server/cursor/EGL, sem instalar compositor). A ABI gráfica
   permanece do sistema, não da stack privada do launcher.
+- Bibliotecas comuns de um desktop: runtimes GCC/libstdc++, compressão,
+  Expat/UUID/GMP/libgpg-error/libffi/PCRE2, mount/blkid/capabilities/atributos/ACL,
+  D-Bus/udev/systemd/USB, ALSA/PulseAudio e X11/XCB. A lista explícita em `prepare.sh`
+  representa os requisitos do host, não dependências privadas do launcher.
 - **Sem instalar .NET, Wine, GTK ou WebKit**. O inventário é verificado e salvo;
   bibliotecas comuns podem ser dependências transitivas do próprio desktop.
 
@@ -52,6 +56,7 @@ um contêiner reduz exposição, mas não substitui uma VM como limite de segura
   registro e D3D12.
 - HTML local renderizado pelo WebKit com seus subprocessos.
 - Janela real do launcher em Xvfb, via tar.gz e AppImage no modo sem FUSE.
+- Ausência de avisos/erros Fontconfig nas duas inicializações gráficas.
 - Logs, duração por etapa, inventário de pacotes, imagem/digest e capturas XWD.
 
 Relatórios ficam em `artifacts/compatibility-<UTC>/`; `--output` permite escolher
@@ -83,6 +88,10 @@ Login real, keyring, áudio físico, GPU NVIDIA/AMD/Intel, RTX/DLSS, desempenho,
 Wayland/compositor e AppImage montado via FUSE requerem testes complementares.
 
 ## Execução registrada
+
+Consulte [a validação da redução de bibliotecas centrais](RESULTS-CORE-LIBS-2026-10-04.md):
+AppImage e tar.gz passaram em Arch, Debian 13.7, Fedora 44 e Ubuntu 24.04.5,
+com a stack de fontes e o SONAME bzip2 do Ubuntu mantidos privados após diagnóstico.
 
 Consulte [a validação local da 1.0.1](RESULTS-1.0.1-2026-10-04.md): os dois
 formatos passaram em bases novas de Arch, Debian 13.7 e Fedora 44. O harness

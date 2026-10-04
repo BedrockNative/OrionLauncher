@@ -24,8 +24,10 @@ dotnet publish src/Orion.Desktop -c Release -r linux-x64 --self-contained true -
 ```
 
 Distribute the entire output directory, including `Assets/orion.svg`. Do not copy only
-the executable. Official AppImage and tar.gz releases include native dependencies
-and pinned runtimes; see [RELEASING.md](../../RELEASING.md) for the main-only workflow.
+the executable. Official AppImage and tar.gz releases include private native
+dependencies and pinned runtimes. Core system libraries and the common desktop
+stack (X11/XCB, audio and device/session clients) come from the host;
+see [RELEASING.md](../../RELEASING.md) for the baseline and main-only workflow.
 
 ## Orion.Native
 

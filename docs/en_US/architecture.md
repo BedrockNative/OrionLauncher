@@ -123,15 +123,25 @@ arguments; shell operators, substitution and environment expansion are not evalu
 
 Every Xodus command and service receives Orion's private `XODUS_CONFIG_DIR`
 and `XDG_RUNTIME_DIR`. Management/installation uses
-`orion.xodus-<profile hash>.sock`. Each game owns a service at
-`orion.xodus-<profile hash>-<instance UUID>.sock`; its WineGDK and CLI receive
-that exact `XODUS_SOCK_NAME` and `XODUS_SOCKET`.
+`orion.xodus-<profile hash>.sock`. Game services use separate sockets derived
+from the profile and an opaque hash of the account identity. Orion starts these
+services in the background when its window opens and reuses them across launches;
+only launcher shutdown, account changes, runtime replacement or a failed service
+requires stopping/restarting them. WineGDK and the CLI receive the matching
+`XODUS_SOCK_NAME` and `XODUS_SOCKET` for their account.
 `AccountId` is an optional opaque saved-account ID. Null resolves the launcher's
 current account at Play time. Xodus 0.5.0 pins that identity with
-`XODUS_ACCOUNT_ID`, keeping session user credentials in memory while retaining
-the same profile's device identity and installed-content keys. Missing selected
-identities fail closed. Game exit disposes its service; no global account switch
-is needed. Custom environment variables cannot override these isolation settings.
+`XODUS_ACCOUNT_ID`, keeping user credentials in memory while retaining the same
+profile's device identity and installed-content keys. Missing selected identities
+fail closed. Services are shared only by games using the same account. Custom
+environment variables cannot override these isolation settings.
+Game preparation runs on a worker, including filesystem scans, RTX validation,
+process output and diagnostic polling. UI progress is posted through the caller’s
+`Progress<T>` context. RTX integrity, compatibility and family conflicts are checked
+once per preparation; results are not cached between launches. RTX recovery,
+inspection and family detection share one validated game-file listing during that
+preparation. Path validation checks each ancestor with a single metadata query,
+and the journal includes RTX substage timings.
 The launcher never discovers or uses a system Xodus executable, profile, service,
 or default socket. The upstream fork scopes keyring entries and WebView storage to
 the canonical profile directory. This is account/runtime isolation, not a security sandbox.
