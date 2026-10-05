@@ -90,6 +90,10 @@ Wayland/compositor e AppImage montado via FUSE requerem testes complementares.
 
 ## Execução registrada
 
+Consulte [a validação local final da 1.0.2](RESULTS-1.0.2-2026-10-05.md):
+AppImage e tar.gz com a flag e notas finais passaram nas 12 etapas em Arch,
+Debian, Fedora e Ubuntu, com oito capturas inspecionadas e hashes registrados.
+
 Consulte [a validação das melhorias de inicialização e Fontconfig](RESULTS-REVIEW-2026-10-04.md):
 AppImage e tar.gz passaram nas quatro distros, com o código atualizado, capturas
 inspecionadas e logs Wine/GUI sem avisos ou erros Fontconfig.
