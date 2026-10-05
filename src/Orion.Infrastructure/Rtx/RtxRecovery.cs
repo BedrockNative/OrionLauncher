@@ -10,7 +10,7 @@ public sealed partial class RtxService
     private static bool IsOwnedFolder(string? folder) => folder is not null && folder.StartsWith("orion-rtx-", StringComparison.Ordinal)
         && Guid.TryParseExact(folder[10..], "N", out _);
 
-    private static RtxInstanceState InspectState(string root)
+    private static RtxInstanceState InspectState(string root, string? materials = null)
     {
         var configuration = Read<RtxConfiguration>(root, "rtx/configuration.json") ?? new();
         RtxInstallation? installed = null;
@@ -19,7 +19,7 @@ public sealed partial class RtxService
         catch (JsonException) { receiptError = "The installation receipt is damaged."; }
         try
         {
-            var materials = Materials(root);
+            materials ??= Materials(root);
             var slots = Slots(Index(ContentFiles.ReadSmall(Path.Combine(materials, "materials.index.json"), 8 * 1024 * 1024)));
             if (installed is null)
             {
@@ -54,23 +54,27 @@ public sealed partial class RtxService
 
     public void ValidateForLaunchUnderLease(Guid id)
     {
-        var root = Root(id); RecoverUnderLease(id); RequireHealthyShaders(root);
-        RequireInstalledCompatibility(root);
+        var root = Root(id); RecoverUnderLease(id);
+        RequireLaunchShaders(root);
         RequireExclusive(id);
     }
-    private static void RequireHealthyShaders(string root)
+    private static void RequireLaunchShaders(string root, Func<string>? resolveMaterials = null)
     {
         // Non-RTX game builds remain launchable when no Orion receipt exists.
-        try { _ = Materials(root); }
+        string materials;
+        try { materials = resolveMaterials?.Invoke() ?? Materials(root); }
         catch (InvalidDataException) when (!File.Exists(ContentFiles.Safe(root, "rtx/current.json"))) { return; }
-        var state = InspectState(root);
+        // Resolve the materials once and use the same integrity inspection for
+        // compatibility. Do not hash the installed shaders a second time.
+        var state = InspectState(root, materials);
         if (state.VerificationError is not null) throw new IOException("RTX needs attention before launch: " + state.VerificationError);
+        if (InstalledCompatibilityError(root, state.Installation) is { } error) throw new InvalidOperationException(error);
     }
 
-    private static void FinishShaderCleanup(string root)
+    private static void FinishShaderCleanup(string root, Func<string>? resolveMaterials = null)
     {
         string materials;
-        try { materials = Materials(root); }
+        try { materials = resolveMaterials?.Invoke() ?? Materials(root); }
         catch (Exception ex) when (ex is IOException or InvalidDataException) { return; }
         var entries = Index(ContentFiles.ReadSmall(Path.Combine(materials, "materials.index.json"), 8 * 1024 * 1024));
         var referenced = entries.OfType<System.Text.Json.Nodes.JsonObject>().Select(e => e["path"]?.GetValue<string>()?.Split('/')[0]).ToHashSet();

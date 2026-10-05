@@ -17,7 +17,12 @@ public sealed class XodusService(AppPaths paths, XodusEnvironment environment, P
     private string? serviceExecutable;
     public event Action<string>? OutputReceived;
 
-    public async Task EnsureAsync(RuntimeInstallation installation, CancellationToken ct)
+    // Startup can be requested by the UI before Play. Keep process creation and
+    // the service's long-lived output observer off the dispatcher as well.
+    public Task EnsureAsync(RuntimeInstallation installation, CancellationToken ct) =>
+        Task.Run(() => EnsureCoreAsync(installation, ct), ct);
+
+    private async Task EnsureCoreAsync(RuntimeInstallation installation, CancellationToken ct)
     {
         await gate.WaitAsync(ct);
         try

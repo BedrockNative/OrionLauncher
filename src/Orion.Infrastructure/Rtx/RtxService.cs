@@ -1,4 +1,5 @@
 using System.IO.Compression;
+using System.Diagnostics;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
@@ -15,10 +16,22 @@ public sealed partial class RtxService(AppPaths paths, InstanceActivity activity
 {
     public static bool IsVanillaTexture(string? packId) => RtxFamilyPolicy.IsVanilla(packId);
     private string Root(Guid id) => ContentFiles.Safe(paths.Instance(id));
-    private static string Materials(string root)
+    private sealed record GameFiles(string[] Executables, string[] MaterialIndexes);
+    private static GameFiles ReadGameFiles(string root, CancellationToken ct)
     {
         var game = ContentFiles.Safe(root, "game");
-        var executables = ContentFiles.Walk(game, CancellationToken.None).Where(p => Path.GetFileName(p) is "Minecraft.Windows.exe" or "Minecraft.Windows.Preview.exe").Take(2).ToArray();
+        List<string> executables = [], indexes = [];
+        foreach (var file in ContentFiles.Walk(game, ct))
+        {
+            var name = Path.GetFileName(file);
+            if (name is "Minecraft.Windows.exe" or "Minecraft.Windows.Preview.exe") executables.Add(file);
+            else if (name == "materials.index.json") indexes.Add(file);
+        }
+        return new(executables.ToArray(), indexes.ToArray());
+    }
+    private static string Materials(string root, GameFiles? files = null)
+    {
+        var executables = (files ?? ReadGameFiles(root, CancellationToken.None)).Executables;
         if (executables.Length != 1) throw new InvalidDataException("A single installed Minecraft executable is required.");
         var result = ContentFiles.Safe(root, Path.GetRelativePath(root, Path.Combine(Path.GetDirectoryName(executables[0])!, "data/renderer/materials")));
         if (!File.Exists(ContentFiles.Safe(result, "materials.index.json"))) throw new InvalidDataException("This game build has no supported RTX materials index.");
@@ -49,9 +62,12 @@ public sealed partial class RtxService(AppPaths paths, InstanceActivity activity
         => (await content.ListAsync(id, ct)).Entries.Where(e => e.Kind == ContentKind.Texture && !e.Archived).ToArray();
 
     public void RecoverUnderLease(Guid id)
+        => RecoverRoot(Root(id));
+
+    private static void RecoverRoot(string root, Func<string>? resolveMaterials = null)
     {
-        var root = Root(id); RtxTransaction.Recover(root);
-        FinishShaderCleanup(root);
+        RtxTransaction.Recover(root);
+        FinishShaderCleanup(root, resolveMaterials);
         var work = ContentFiles.Safe(root, "rtx");
         if (Directory.Exists(work))
             foreach (var directory in Directory.EnumerateDirectories(work, "download-*"))
@@ -323,16 +339,40 @@ public sealed partial class RtxService(AppPaths paths, InstanceActivity activity
         return RtxFamilyPolicy.BetterInUse(root) || RtxFamilyPolicy.VanillaInUse(root, content.ListUnderLease(id));
     }
 
-    public void PrepareLaunchUnderLease(Guid id, IProgress<OperationProgress>? progress, CancellationToken ct)
+    public bool PrepareLaunchUnderLease(Guid id, IProgress<OperationProgress>? progress, CancellationToken ct,
+        Action<string, TimeSpan>? timing = null)
     {
-        var root = Root(id); RecoverUnderLease(id);
-        RequireHealthyShaders(root);
-        RequireInstalledCompatibility(root);
-        RequireExclusive(id);
-        var configuration = RtxFamilyPolicy.Configuration(root, RtxFamilyPolicy.BetterInUse(root) ? RtxFamily.BetterRtx : RtxFamily.VanillaRtx);
-        if (!configuration.EnableOnLaunch && !configuration.AdvancedVideo) return;
+        var phaseStarted = Stopwatch.GetTimestamp();
+        void Checkpoint(string stage)
+        {
+            var now = Stopwatch.GetTimestamp();
+            timing?.Invoke(stage, Stopwatch.GetElapsedTime(phaseStarted, now));
+            phaseStarted = now;
+        }
+        ct.ThrowIfCancellationRequested();
+        var root = Root(id);
+        // Lazily enumerate after transaction recovery; reuse paths only within this
+        // preparation. Index contents and installed shader hashes are still read fresh.
+        var files = new Lazy<GameFiles>(() => ReadGameFiles(root, ct));
+        string ResolveMaterials() => Materials(root, files.Value);
+        RecoverRoot(root, ResolveMaterials);
+        Checkpoint("Recovery and game scan");
+        RequireLaunchShaders(root, ResolveMaterials);
+        Checkpoint("Shader integrity and compatibility");
+        ct.ThrowIfCancellationRequested();
+        // This snapshot lives only for this preparation under the instance lease;
+        // a later launch still rechecks external edits and damaged shaders.
+        var hasShaders = RtxFamilyPolicy.HasShaders(root, files.Value.MaterialIndexes);
+        var better = RtxFamilyPolicy.BetterInUse(root, hasShaders);
+        var vanilla = RtxFamilyPolicy.VanillaInUse(root, content.ListUnderLease(id), hasShaders);
+        if (better && vanilla) throw new InvalidOperationException(RtxFamilyPolicy.Conflict);
+        var active = better || vanilla;
+        var configuration = RtxFamilyPolicy.Configuration(root, better ? RtxFamily.BetterRtx : RtxFamily.VanillaRtx, hasShaders);
+        Checkpoint("RTX families and content");
+        if (!configuration.EnableOnLaunch && !configuration.AdvancedVideo) return active;
         var users = ContentFiles.Safe(root, "prefix/drive_c/users");
         Dictionary<string, byte[]> writes = [];
+        var existingOptions = 0;
         if (Directory.Exists(users))
             foreach (var user in Directory.EnumerateDirectories(users))
             foreach (var edition in new[] { "Minecraft Bedrock", "Minecraft Bedrock Preview" })
@@ -344,11 +384,18 @@ public sealed partial class RtxService(AppPaths paths, InstanceActivity activity
                     if (Path.GetFileName(profile) == "Shared") continue;
                     var relative = Path.GetRelativePath(root, Path.Combine(profile, "games/com.mojang/minecraftpe/options.txt"));
                     var path = ContentFiles.Safe(root, relative); if (!File.Exists(path)) continue;
-                    writes.Add(relative, Encoding.UTF8.GetBytes(LaunchOptions(ContentFiles.ReadSmall(path), configuration)));
+                    ct.ThrowIfCancellationRequested();
+                    existingOptions++;
+                    var original = ContentFiles.ReadSmall(path);
+                    var updated = LaunchOptions(original, configuration);
+                    if (updated != original) writes.Add(relative, Encoding.UTF8.GetBytes(updated));
                 }
             }
         if (writes.Count > 0) RtxTransaction.Apply(root, writes, ct);
-        progress?.Report(new(writes.Count > 0 ? "Applied RTX launch preferences" : "RTX: start and sign into the game once to create its graphics preferences"));
+        Checkpoint("Graphics preferences");
+        progress?.Report(new(writes.Count > 0 ? "Applied RTX launch preferences" : existingOptions > 0
+            ? "RTX launch preferences already applied" : "RTX: start and sign into the game once to create its graphics preferences"));
+        return active;
     }
     public static string LaunchOptions(string source, RtxConfiguration configuration)
     {

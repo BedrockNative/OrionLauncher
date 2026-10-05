@@ -27,6 +27,22 @@ public static class MangoHudIntegration
 
     public static bool IsAvailable => FindExecutable(Environment.GetEnvironmentVariable("PATH") ?? "") is not null;
 
+    public static bool HasSystemConfiguration(IReadOnlyDictionary<string, string?>? environment = null,
+        string systemConfigFile = "/etc/MangoHud.conf")
+    {
+        string? Value(string name) => environment is not null && environment.TryGetValue(name, out var value)
+            ? value : Environment.GetEnvironmentVariable(name);
+        if (!string.IsNullOrWhiteSpace(Value("MANGOHUD_CONFIG"))) return true;
+        // An explicit config file replaces MangoHud's normal file search, even if missing.
+        if (Value("MANGOHUD_CONFIGFILE") is { } file) return File.Exists(file);
+        var config = Value("XDG_CONFIG_HOME");
+        if (string.IsNullOrEmpty(config) && Value("HOME") is { Length: > 0 } home)
+            config = Path.Combine(home, ".config");
+        return (!string.IsNullOrEmpty(config) && Path.IsPathFullyQualified(config)
+                && File.Exists(Path.Combine(config, "MangoHud", "MangoHud.conf")))
+            || File.Exists(systemConfigFile);
+    }
+
     public static Dictionary<string, string?> Apply(InstanceLaunchOptions options,
         IReadOnlyDictionary<string, string?> environment, Action<string>? report = null)
     {
@@ -44,6 +60,12 @@ public static class MangoHudIntegration
         // DXVK/VKD3D use Vulkan. No wrapper or LD_PRELOAD is required, so prime-run
         // and literal argument vectors stay intact and native helpers are not hooked.
         result["MANGOHUD"] = "1";
+        if (hud.UseSystemConfig ?? HasSystemConfiguration(result))
+        {
+            // Preserve inherited/advanced settings and let MangoHud select its own file.
+            report?.Invoke("MangoHud enabled with system configuration; instance metrics are not applied.");
+            return result;
+        }
         result["MANGOHUD_CONFIG"] = Configuration(hud);
         report?.Invoke("MangoHud enabled with this instance's metrics (system Vulkan layer). Sensor availability depends on the driver and hardware.");
         return result;

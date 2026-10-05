@@ -12,10 +12,11 @@
   Conventional Commits e pushes nela; **não faça push direto na `main`**.
   Se estiver na `main`, mude para `development` antes de começar. Preserve
   alterações locais ao trocar de branch; não use reset para forçar a troca.
-- A `main` é a linha de publicação: recebe o trabalho revisado por merge de
-  `development`, somente quando o usuário autorizar uma release ou um merge de
-  configuração/documentação. Nesse segundo caso, não altere `RELEASE_VERSION`.
-  Preserve os commits separados usando merge commit, não squash.
+- A `main` é a linha de publicação: recebe o trabalho revisado de `development`
+  por PR. Só faça merge quando o usuário autorizar; um pedido para criar PR e
+  solicitar revisão não autoriza merge. Integrações sem release, inclusive de
+  código, mantêm `RELEASE_VERSION` inalterado. Publicar uma release exige pedido
+  explícito. Preserve os commits separados usando merge commit, não squash.
 - Contribuições de outras branches/forks devem abrir PR para `development`.
   A proteção de `main` exige PR e o check **Main source policy**, sem bypass:
   somente `development` do próprio repositório é aceita. PRs de outra origem são
@@ -46,6 +47,49 @@
   do Actions e informe se está aguardando aprovação, falhou ou foi publicado.
   Para repetir um build que falhou, siga o `workflow_dispatch` documentado em
   `RELEASING.md`, na `main` e com a mesma versão de `RELEASE_VERSION`.
+
+## Inicialização, desempenho e configurações
+
+- Execute preparação do jogo, varreduras de arquivos, verificação de shaders e
+  coleta de saída dos processos fora da thread da interface. `async` sozinho não
+  garante isso; verifique também o trabalho síncrono e as continuações. Envie
+  atualizações visuais pelo contexto da interface e preserve o cancelamento.
+- Inicie Xodus junto com o launcher e reutilize serviços isolados por conta entre
+  partidas. O launcher é dono desses processos; encerre-os no fechamento e renove
+  quando mudanças de conta/runtime exigirem. Cancelar uma partida não deve parar
+  o serviço compartilhado nem afetar outra instância.
+- Não execute `wineboot`, `wine reg add` ou `wineserver` como preparação automática
+  antes de cada partida. Mantenha `wineserver -w` após o jogo para acompanhar seu
+  encerramento e a limpeza do prefixo da instância em caso de cancelamento/falha.
+- Reutilize varreduras e inspeções RTX apenas dentro da preparação atual, sob o
+  bloqueio da instância. Preserve integridade, compatibilidade, recuperação de
+  transações e rejeição de links/caminhos inválidos; não use cache entre partidas
+  que oculte alterações externas. Evite regravar preferências inalteradas.
+- Registre tempos de preparação e subetapas RTX. Meça otimizações com dados
+  descartáveis e diferencie benchmarks sintéticos do tempo real do Minecraft.
+- O toggle MangoHud para configuração do sistema deve iniciar ligado quando ela
+  for detectada, salvo preferência explícita. Nesse modo, desabilite controles
+  locais de métricas/posição, preserve seus valores e não gere overrides locais.
+- Verifique atualizações de Xodus/WineGDK em segundo plano ao abrir, com toggle
+  persistente para desativar. Essa verificação consulta metadados e avisa sobre
+  atualizações; não deve instalar runtimes automaticamente.
+
+## Bibliotecas dos pacotes Linux
+
+- Use as bibliotecas centrais comuns do host conforme `HOST`/`HOST_SONAMES` em
+  `packaging/linux/package.py`, inclusive removendo cópias de arquivos upstream.
+  Siga dependências diretas privadas; pare a coleta ao chegar em bibliotecas do
+  host. Não empacote glibc, drivers de GPU ou serviços da sessão.
+- Mantenha dependências com ABI específica quando necessárias à portabilidade.
+  Fontconfig/FreeType/HarfBuzz/FriBidi formam uma stack privada coordenada por
+  compatibilidade com Avalonia. Preserve `libbz2.so.1.0` enquanto o SONAME Ubuntu
+  não existir nas distros suportadas. Documente e teste outras exceções.
+- Bibliotecas privadas devem usar recursos/configurações compatíveis do pacote.
+  Valide a relocação do diretório de templates do Fontconfig e rejeite avisos de
+  sintaxe no smoke test. Não esconda mensagens nem altere configurações do host.
+- Use RUNPATH relativo e limite variáveis de bibliotecas aos processos do Orion.
+  Não crie aliases entre ABIs incompatíveis. Uma pasta de desenvolvimento com
+  DLLs atualizadas não equivale a artefatos finais validados pela matriz.
 
 ## Antes de preparar um commit de release
 

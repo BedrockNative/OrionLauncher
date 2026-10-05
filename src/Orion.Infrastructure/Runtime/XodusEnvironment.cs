@@ -1,10 +1,18 @@
+using System.Security.Cryptography;
+using System.Text;
 using Orion.Infrastructure.Storage;
 
 namespace Orion.Infrastructure.Runtime;
 
 public sealed class XodusEnvironment(AppPaths paths, Guid? session = null, string? accountId = null)
 {
-    public string SocketName => session is { } id ? $"orion.xodus-{paths.Identity}-{id:N}.sock" : paths.SocketName;
+    public string SocketName { get; private init; } = session is { } id ? $"orion.xodus-{paths.Identity}-{id:N}.sock" : paths.SocketName;
+    public static XodusEnvironment ForAccount(AppPaths paths, string? accountId)
+    {
+        // Include the profile in a short digest to stay within Unix socket path limits.
+        var hash = Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(paths.Config + "\0" + accountId)));
+        return new(paths, accountId: accountId) { SocketName = $"orion.xodus-{hash[..24]}.sock" };
+    }
     public string SocketPath => Path.Combine(paths.Runtime, SocketName);
     public Dictionary<string, string?> Create(string? prefix = null)
     {

@@ -9,7 +9,7 @@ namespace Orion.Infrastructure.Runtime;
 public sealed record XboxAccount(string Id, string Username, bool Active);
 
 public sealed class AccountService(AppPaths paths, RuntimeManager runtimes, ProcessRunner runner,
-    XodusEnvironment environment, XodusService service)
+    XodusEnvironment environment, XodusService service, XodusSessions? sessions = null)
 {
     private readonly SemaphoreSlim profileRequests = new(1, 1);
     private string ProfilePath(string id)
@@ -77,6 +77,7 @@ public sealed class AccountService(AppPaths paths, RuntimeManager runtimes, Proc
         if (action is not ("select" or "remove") || id.Length != 64 || !id.All(char.IsAsciiHexDigit))
             throw new ArgumentException("Invalid account operation.");
         var installed = await runtimes.EnsureAsync(RuntimeDefinition.Xodus, progress, ct);
+        if (action == "remove" && sessions is not null) await sessions.ResetAsync(ct);
         await service.ResetAsync(ct);
         return await ReadAsync(installed, ["accounts", "--unlock", action, id], ct);
     }
@@ -119,6 +120,7 @@ public sealed class AccountService(AppPaths paths, RuntimeManager runtimes, Proc
     private async Task RunAsync(string action, IProgress<OperationProgress>? progress, CancellationToken ct)
     {
         var xodus = await runtimes.EnsureAsync(RuntimeDefinition.Xodus, progress, ct);
+        if (sessions is not null) await sessions.ResetAsync(ct);
         // The service keeps tokens in memory; end our service before changing the profile's account.
         await service.ResetAsync(ct);
         progress?.Report(new(action == "login" ? "Complete any desktop keyring prompt, then sign in through the Xodus window" : "Signing out of the Orion profile"));

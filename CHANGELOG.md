@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.0.2
+
+Lean Linux packaging, system MangoHud configuration, optional startup runtime-update
+checks, persistent Xodus services, responsive game preparation and faster RTX
+validation with fewer filesystem scans:
+[English](docs/en_US/changelog/release/v1.0.2.md) ·
+[Português (Brasil)](docs/pt_BR/changelog/release/v1.0.2.md).
+
 ## 1.0.1
 
 File manager selection, folder-opening fixes, responsive desktop-opacity confirmation,

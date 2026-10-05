@@ -27,7 +27,7 @@ the main ruleset template. Changing it alone does not change GitHub settings.
 Install the workflow on `main` before requiring its check; do not require the
 post-merge `linux` build as a pre-merge check, because it only runs after a main push.
 
-## Releases and configuration merges
+## Releases and merges without publication
 
 Accumulate future changes in a **new draft** release note on `development`, for
 example `docs/en_US/changelog/release/v1.0.1.md`, with the corresponding Portuguese
@@ -38,8 +38,10 @@ version without `v`, and merge `development` → `main` using a merge commit.
 Actions uses the matching English Markdown as the release description and creates
 the tag and AppImage/tar.gz artifacts. Keep human approval of `curseforge-release`.
 
-A configuration/documentation PR may also be merged when authorized, but must
-leave `RELEASE_VERSION` unchanged. It runs main CI without publishing a new release.
+An explicitly authorized integration, including code or documentation, may leave
+`RELEASE_VERSION` unchanged. It runs main CI without publishing a new release.
+Creating a PR and requesting review do not authorize merging it; wait for an
+explicit merge instruction. Release publication also requires explicit authorization.
 Neither a changelog filename nor a merge-message marker is a release flag.
 
 Read [RELEASING.md](../../RELEASING.md) and [AGENTS.md](../../AGENTS.md) before

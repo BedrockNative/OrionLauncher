@@ -102,6 +102,7 @@ public sealed class RtxFamilyTests
         await File.WriteAllTextAsync(manifest, ContentTests.Manifest("Opus", "resources", RtxTests.Opus().PackId));
         Assert.NotNull((await service.InspectAsync(instance.Id)).FamilyConflict);
         Assert.Throws<InvalidOperationException>(() => service.ValidateForLaunchUnderLease(instance.Id));
+        Assert.Throws<InvalidOperationException>(() => service.PrepareLaunchUnderLease(instance.Id, null, default));
         Assert.True(File.Exists(manifest)); Assert.NotNull((await service.InspectAsync(instance.Id)).Installation);
         await service.RestoreAsync(instance.Id);
         Assert.True(File.Exists(manifest)); service.ValidateForLaunchUnderLease(instance.Id);

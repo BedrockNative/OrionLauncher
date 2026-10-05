@@ -67,6 +67,9 @@ public partial class App : Avalonia.Application
                 if (opened) return;
                 opened = true;
                 if (Program.Request.Background) window.Hide();
+                await ready;
+                model.StartXodusOnStartup();
+                _ = model.RuntimeUpdates.CheckOnStartupAsync(model.CheckRuntimeUpdatesOnStartup);
                 await HandleAsync(Program.Request);
             };
         }

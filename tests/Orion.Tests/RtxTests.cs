@@ -176,6 +176,7 @@ public sealed class RtxTests
         var material = Path.Combine(Materials(dir, instance), receipt.Folder, "RTXStub.material.bin"); await File.WriteAllBytesAsync(material, Shader(7));
         await Assert.ThrowsAsync<IOException>(() => service.InstallAsync(instance, Preset(), false, null, CancellationToken.None));
         Assert.Throws<IOException>(() => service.ValidateForLaunchUnderLease(instance.Id));
+        Assert.Throws<IOException>(() => service.PrepareLaunchUnderLease(instance.Id, null, default));
         Assert.True((await service.InspectAsync(instance.Id)).CanRestore);
         await service.RestoreAsync(instance.Id);
         Assert.Equal(Shader(7), await File.ReadAllBytesAsync(Path.Combine(dir.Paths.Instance(instance.Id), "rtx/quarantine", receipt.Folder, "RTXStub.material.bin")));
@@ -215,6 +216,54 @@ public sealed class RtxTests
         await Assert.ThrowsAsync<InvalidDataException>(() => service.InstallAsync(instance, Preset(), false, null, CancellationToken.None));
         Assert.Empty(Directory.GetFiles(outside));
     }
+    [Theory]
+    [InlineData("file")]
+    [InlineData("directory")]
+    [InlineData("dangling")]
+    [InlineData("root")]
+    public async Task LaunchScanRejectsEveryKindOfLinkedGamePath(string kind)
+    {
+        using var dir = new TestDirectory(); var instance = await Setup(dir); var service = Service(dir, new());
+        Assert.False(service.PrepareLaunchUnderLease(instance.Id, null, default));
+        var game = dir.Paths.Game(instance.Id);
+        var outside = Path.Combine(dir.Root, "outside"); Directory.CreateDirectory(outside);
+        var marker = Path.Combine(outside, "marker.txt"); await File.WriteAllTextAsync(marker, "unchanged");
+        var link = Path.Combine(game, "linked");
+        if (kind == "root")
+        {
+            var moved = Path.Combine(dir.Root, "moved-game"); Directory.Move(game, moved);
+            Directory.CreateSymbolicLink(game, moved);
+        }
+        else if (kind == "directory") Directory.CreateSymbolicLink(link, outside);
+        else File.CreateSymbolicLink(link, kind == "file" ? marker : Path.Combine(outside, "missing"));
+        Assert.Throws<InvalidDataException>(() => service.PrepareLaunchUnderLease(instance.Id, null, default));
+        Assert.Equal("unchanged", await File.ReadAllTextAsync(marker));
+    }
+
+    [Fact]
+    public async Task LaunchScanDoesNotCacheIndexChangesBetweenLaunches()
+    {
+        using var dir = new TestDirectory(); var instance = await Setup(dir); var service = Service(dir, new());
+        Assert.False(service.PrepareLaunchUnderLease(instance.Id, null, default));
+        var index = Path.Combine(Materials(dir, instance), "materials.index.json");
+        var original = await File.ReadAllTextAsync(index);
+        var changed = original.Replace("\"path\":\"RTXStub\"", "\"path\":\"external/RTXStub\"");
+        Assert.NotEqual(original, changed);
+        await File.WriteAllTextAsync(index, changed);
+        Assert.Throws<IOException>(() => service.PrepareLaunchUnderLease(instance.Id, null, default));
+        await File.WriteAllTextAsync(index, original);
+        Assert.False(service.PrepareLaunchUnderLease(instance.Id, null, default));
+    }
+
+    [Fact]
+    public async Task LaunchScanRetainsTheDirectoryDepthLimit()
+    {
+        using var dir = new TestDirectory(); var instance = await Setup(dir); var service = Service(dir, new());
+        var nested = Path.Combine(new[] { dir.Paths.Game(instance.Id) }.Concat(Enumerable.Repeat("nested", 42)).ToArray());
+        Directory.CreateDirectory(nested); await File.WriteAllTextAsync(Path.Combine(nested, "asset"), "fixture");
+        Assert.Throws<InvalidDataException>(() => service.PrepareLaunchUnderLease(instance.Id, null, default));
+    }
+
     [Fact]
     public async Task InterruptedTransactionRestoresOriginalIndexBeforeLaunch()
     {
@@ -235,11 +284,15 @@ public sealed class RtxTests
         var options = Path.Combine(dir.Paths.Prefix(instance.Id), "drive_c/users/player/AppData/Roaming/Minecraft Bedrock/Users/profile/games/com.mojang/minecraftpe/options.txt");
         Directory.CreateDirectory(Path.GetDirectoryName(options)!);
         var original = "volume:0.5\r\ngraphics_mode:1\r\ngraphics_mode:2\r\ngfx_vsync:1\r\n"; await File.WriteAllTextAsync(options, original);
-        service.PrepareLaunchUnderLease(instance.Id, null, CancellationToken.None); Assert.Equal(original, await File.ReadAllTextAsync(options));
+        Assert.False(service.PrepareLaunchUnderLease(instance.Id, null, CancellationToken.None)); Assert.Equal(original, await File.ReadAllTextAsync(options));
         await service.ConfigureAsync(instance.Id, new(true, false)); service.PrepareLaunchUnderLease(instance.Id, null, CancellationToken.None);
         var result = await File.ReadAllTextAsync(options); Assert.Contains("volume:0.5\r\n", result); Assert.Contains("graphics_mode:3\r\n", result); Assert.Contains("gfx_vsync:1", result);
         Assert.Equal(1, result.Split("graphics_mode:").Length - 1);
         await service.ConfigureAsync(instance.Id, new(true, true)); service.PrepareLaunchUnderLease(instance.Id, null, CancellationToken.None); Assert.Contains("gfx_vsync:0", await File.ReadAllTextAsync(options));
+        var unchanged = new DateTime(2000, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+        File.SetLastWriteTimeUtc(options, unchanged);
+        Assert.True(service.PrepareLaunchUnderLease(instance.Id, null, CancellationToken.None));
+        Assert.Equal(unchanged, File.GetLastWriteTimeUtc(options));
     }
     internal const string CatalogJson = """
       [{"uuid":"default","name":"Daylight","icon":"https://bedrock.graphics/favicon.png",

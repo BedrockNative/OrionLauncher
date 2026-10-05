@@ -5,6 +5,7 @@ public sealed record LauncherSettings(string Language = "en-US", bool KeepInBack
 {
     public AppearanceSettings Appearance { get; init; } = new();
     public string FileManager { get; init; } = "system";
+    public bool CheckRuntimeUpdatesOnStartup { get; init; } = true;
 }
 
 public sealed class SettingsStore(AppPaths paths)

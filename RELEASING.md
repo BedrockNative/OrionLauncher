@@ -54,8 +54,12 @@ no computador que executará o launcher.
 O pacote inclui .NET self-contained, Avalonia/Skia/HarfBuzz/Inter,
 `Orion.Native.dll`, Xodus, WineGDK (com os componentes distribuídos pelo fork),
 Wine Mono e Gecko nas versões esperadas pelo Wine (sem prompts de download no
-primeiro prefixo), GTK/WebKit e seus processos auxiliares de login, GStreamer, bibliotecas de áudio,
-TLS/ICU/fontes e dependências ELF transitivas. Inclui também licenças/atribuições.
+primeiro prefixo), GTK/GLib/WebKit e seus processos auxiliares de login, GStreamer,
+TLS/ICU, fontes e dependências ELF privadas. Bibliotecas comuns do sistema e do
+desktop são fornecidas pelo host, inclusive quando aparecem dentro dos arquivos
+de runtimes upstream. A coleta segue somente dependências diretas de componentes
+privados; não copia a árvore transitiva pertencente às bibliotecas do host.
+Inclui também licenças/atribuições.
 Somente o provider opcional de profiling LTTng 2.12 é excluído; ele não é usado
 pelo launcher. EventPipe, dumps de crash e logs do launcher/jogo são preservados.
 O FFmpeg exigido pelo WineGDK é compilado a partir da versão e checksum fixados,
@@ -77,6 +81,24 @@ e driver Vulkan/OpenGL/EGL/OpenGL ES compatível com a GPU (incluindo os loaders
 do sistema, como `libGLESv2.so.2`, e suas bibliotecas Wayland client/server/cursor/EGL).
 Essas bibliotecas seguem a versão dos drivers do host para não ocultar símbolos
 exigidos pelo Mesa de distribuições mais recentes. FUSE é opcional pelo modo de extração.
+Também são necessários os runtimes GCC/libstdc++, bibliotecas comuns de compressão
+(zlib, xz e zstd), Expat, UUID, GMP, libgpg-error, libffi, PCRE2,
+mount/blkid, capabilities/atributos/ACL, bibliotecas cliente de
+D-Bus/systemd/udev/USB, ALSA/PulseAudio e X11/XCB. Os plugins/configuração ALSA vêm do
+host. Não é prometido funcionamento em uma instalação mínima sem essa base de
+desktop. A política revisada fica em `HOST`/`HOST_SONAMES` de
+`packaging/linux/package.py`; `hostLibraries` no manifesto registra as bibliotecas
+excluídas/encontradas pelo empacotamento. GTK/WebKit, ICU, TLS e codecs com ABI
+específica continuam privados porque suas versões não são uniformes entre distros.
+Fontconfig/FreeType/HarfBuzz/FriBidi também permanecem juntos no pacote: misturar
+HarfBuzz recente do host com `libHarfBuzzSharp` do Avalonia causou colisão de símbolos
+e abort na inicialização em Arch. `libbz2.so.1.0` continua privada porque esse SONAME
+do Ubuntu não existe normalmente no Fedora; não são criados aliases entre ABIs.
+O empacotador reloca o diretório interno de templates do Fontconfig para
+`conf.avail`, resolvido pelo `FONTCONFIG_PATH` privado. As fontes do host continuam
+disponíveis, mas os templates automáticos vêm da mesma base da biblioteca. Uma
+mudança no caminho compilado bloqueia o build para revisão; o smoke test exige
+fontes disponíveis e ausência de avisos/erros Fontconfig.
 Minecraft, mundos, contas, shaders e conteúdo de terceiros **não** são incluídos;
 o download do jogo ainda requer internet, conta e licença válidas.
 

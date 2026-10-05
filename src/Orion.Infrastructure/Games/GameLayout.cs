@@ -10,10 +10,13 @@ public static class GameLayout
         return matches.Length == 1 ? matches[0] : throw new InvalidDataException("The package must contain one Minecraft Bedrock GDK executable.");
     }
 
-    public static void Validate(string directory)
+    public static void Validate(string directory) => ValidatedExecutable(directory);
+
+    public static string ValidatedExecutable(string directory)
     {
         var executable = Executable(directory);
         if (new FileInfo(executable).Length == 0 || !File.Exists(Path.Combine(directory, ".xodus-streaming.msixvc")))
             throw new InvalidDataException("Xodus did not finish extracting the package. See the installation log.");
+        return executable;
     }
 }

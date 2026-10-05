@@ -99,6 +99,9 @@ def gui(executable, name, env):
                     capture = REPORT / (name + ".xwd")
                     command("xwd", "-id", match[1], "-silent", "-out", capture)
                     if rendered_capture(capture):
+                        output = (REPORT / (name + ".log")).read_text(errors="replace")
+                        if "Fontconfig warning:" in output or "Fontconfig error:" in output:
+                            raise RuntimeError(f"{name} parsed incompatible Fontconfig configuration")
                         return
                 time.sleep(1)
             raise RuntimeError(f"{name} never showed a rendered main window")
@@ -117,6 +120,8 @@ def main():
     for name in ("cache", "config", "data", "runtime"):
         path = WORK / name
         path.mkdir(mode=0o700)
+        if name == "cache":
+            (path / "fontconfig").mkdir()
         os.environ[f"XDG_{name.upper()}_HOME" if name != "runtime" else "XDG_RUNTIME_DIR"] = str(path)
     os.environ.update(DISPLAY=":99", LIBGL_ALWAYS_SOFTWARE="1", GALLIUM_DRIVER="llvmpipe")
     with (REPORT / "xvfb.log").open("w") as log:
@@ -183,6 +188,9 @@ def run_tests():
             with (REPORT / "wineboot.log").open("w") as log:
                 subprocess.run([str(wine.parent / "wineboot"), "-u"], env=env, timeout=180, check=True, stdout=log, stderr=subprocess.STDOUT)
             command(server, "-w", env=env, timeout=90)
+            font_log = (REPORT / "wineboot.log").read_text(errors="replace")
+            if "Fontconfig warning:" in font_log or "Fontconfig error:" in font_log:
+                raise RuntimeError("Wine prefix initialization reported a Fontconfig problem")
             if not (prefix / "system.reg").is_file() or not (prefix / "drive_c/windows/system32/d3d12.dll").is_file():
                 raise RuntimeError("Wine did not prepare the expected prefix")
         finally:
@@ -196,6 +204,8 @@ def run_tests():
     for name in ("cache", "config", "data", "runtime"):
         path = WORK / ("appimage-" + name)
         path.mkdir(mode=0o700)
+        if name == "cache":
+            (path / "fontconfig").mkdir()
         os.environ[f"XDG_{name.upper()}_HOME" if name != "runtime" else "XDG_RUNTIME_DIR"] = str(path)
     image = next(packages.glob("*.AppImage"))
     if not os.access(image, os.X_OK):

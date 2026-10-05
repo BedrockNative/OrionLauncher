@@ -39,6 +39,32 @@ public sealed class RuntimeTests
         Assert.Equal(installed, await manager.EnsureAsync(RuntimeDefinition.Xodus, null, default, checkForUpdates: true));
     }
 
+    [Fact]
+    public async Task UpdateCheckReadsMetadataWithoutDownloadingOrChangingTheInstalledRuntime()
+    {
+        using var directory = new TestDirectory();
+        var root = Path.Combine(directory.Root, "bundle", "xodus");
+        Directory.CreateDirectory(root);
+        foreach (var name in RuntimeDefinition.Xodus.Executables)
+        {
+            var file = Path.Combine(root, name);
+            await File.WriteAllTextAsync(file, "fixture");
+            File.SetUnixFileMode(file, (UnixFileMode)0x1ED);
+        }
+        var version = Path.Combine(root, "version.json");
+        await AtomicFile.WriteJsonAsync(version, "1");
+        using var http = new HttpClient(new ReleaseTests.Handler(_ => throw new InvalidOperationException("No downloads permitted")));
+        var manager = new RuntimeManager(directory.Paths, new FixedRelease(), new(http), Path.GetDirectoryName(root));
+        var update = await manager.CheckForUpdatesAsync(RuntimeDefinition.Xodus, default);
+        Assert.True(update.Available);
+        Assert.Equal("v2", update.LatestTag);
+        Assert.Equal("1", update.InstalledTag);
+        Assert.Equal("1", (await manager.GetInstalledAsync(RuntimeDefinition.Xodus, default))!.Tag);
+        Assert.False(Directory.Exists(Path.Combine(directory.Paths.Tools, "xodus")));
+        await AtomicFile.WriteJsonAsync(version, "2");
+        Assert.False((await manager.CheckForUpdatesAsync(RuntimeDefinition.Xodus, default)).Available);
+    }
+
     private sealed class OfflineRelease : IReleaseClient
     {
         public Task<Release> GetLatestAsync(Repository repository, CancellationToken ct) => throw new HttpRequestException("Offline");
@@ -120,7 +146,7 @@ public sealed class RuntimeTests
                 {
                     await runner.RunAsync(new(RuntimeManager.FindExecutable(output, "wineboot"), ["-u"], output, environment), log, timeout.Token);
                     // Registry persistence finishes when the private server exits,
-                    // not necessarily when wineboot returns (as in GameLauncher).
+                    // not necessarily when this opt-in wineboot fixture returns.
                     await runner.RunAsync(new(environment["WINESERVER"]!, ["-w"], output, environment), log, timeout.Token);
                     var diagnostics = await File.ReadAllTextAsync(log);
                     Assert.True(File.Exists(Path.Combine(directory.Paths.Prefix(instance.Id), "system.reg")), diagnostics);

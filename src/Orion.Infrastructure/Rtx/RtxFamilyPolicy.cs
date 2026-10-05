@@ -23,14 +23,17 @@ internal static class RtxFamilyPolicy
         var path = ContentFiles.Safe(root, relative);
         return File.Exists(path) ? JsonSerializer.Deserialize<T>(ContentFiles.ReadSmall(path)) : default;
     }
-    internal static bool HasShaders(string root)
+    internal static bool HasShaders(string root, IEnumerable<string>? materialIndexes = null)
     {
         try { if (Read<RtxInstallation>(root, "rtx/current.json") is not null) return true; }
         catch (JsonException) { /* The index remains authoritative for recovery and legacy ownership. */ }
         // Detect missing receipts and external redirects too. Never follow shader symlinks.
         var game = ContentFiles.Safe(root, "game");
         if (!Directory.Exists(game)) return false;
-        foreach (var file in ContentFiles.Walk(game, CancellationToken.None).Where(p => Path.GetFileName(p) == "materials.index.json"))
+        // Recovery may have quarantined an orphan since the per-launch scan.
+        var indexes = materialIndexes?.Where(File.Exists)
+            ?? ContentFiles.Walk(game, CancellationToken.None).Where(p => Path.GetFileName(p) == "materials.index.json");
+        foreach (var file in indexes)
         {
             using var json = JsonDocument.Parse(ContentFiles.ReadSmall(file, 8 * 1024 * 1024), new() { AllowTrailingCommas = true, CommentHandling = JsonCommentHandling.Skip });
             if (!json.RootElement.TryGetProperty("materials", out var slots)) continue;
@@ -40,19 +43,19 @@ internal static class RtxFamilyPolicy
         }
         return false;
     }
-    internal static RtxConfiguration Configuration(string root, RtxFamily family)
+    internal static RtxConfiguration Configuration(string root, RtxFamily family, bool? hasShaders = null)
     {
         var current = Read<RtxConfiguration>(root, ConfigPath(family));
         if (current is not null) return current;
         // Legacy settings belong to the existing shader provider; otherwise to stock RTX.
         var legacy = Read<RtxConfiguration>(root, "rtx/configuration.json");
-        return legacy is not null && family == (HasShaders(root) ? RtxFamily.BetterRtx : RtxFamily.VanillaRtx) ? legacy : new();
+        return legacy is not null && family == ((hasShaders ?? HasShaders(root)) ? RtxFamily.BetterRtx : RtxFamily.VanillaRtx) ? legacy : new();
     }
     internal static bool Active(RtxConfiguration config) => config.EnableOnLaunch || config.DisableVSync || config.AdvancedVideo;
-    internal static bool BetterInUse(string root) => HasShaders(root) || Active(Configuration(root, RtxFamily.BetterRtx));
-    internal static bool VanillaInUse(string root, IEnumerable<ContentEntry> entries) => entries.Any(e => !e.Archived
+    internal static bool BetterInUse(string root, bool? hasShaders = null) => (hasShaders ?? HasShaders(root)) || Active(Configuration(root, RtxFamily.BetterRtx, hasShaders));
+    internal static bool VanillaInUse(string root, IEnumerable<ContentEntry> entries, bool? hasShaders = null) => entries.Any(e => !e.Archived
         && (IsVanilla(e.PackId) || e.Kind == ContentKind.World && WorldHasVanilla(ContentFiles.Safe(root, e.Id))))
-        || Read<DlssInstallation>(root, "rtx/dlss/current.json") is not null || Active(Configuration(root, RtxFamily.VanillaRtx));
+        || Read<DlssInstallation>(root, "rtx/dlss/current.json") is not null || Active(Configuration(root, RtxFamily.VanillaRtx, hasShaders));
     private static bool WorldHasVanilla(string world)
     {
         var packs = ContentFiles.Safe(world, "resource_packs");

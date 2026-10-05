@@ -18,6 +18,73 @@ public sealed class MangoHudTests
     }
 
     [Fact]
+    public void SystemConfigurationDetectionRespectsEnvironmentAndFilePrecedence()
+    {
+        using var directory = new TestDirectory();
+        var config = Path.Combine(directory.Root, "config");
+        var system = Path.Combine(directory.Root, "MangoHud.conf");
+        var env = new Dictionary<string, string?> { ["HOME"] = directory.Root,
+            ["XDG_CONFIG_HOME"] = config, ["MANGOHUD_CONFIG"] = null, ["MANGOHUD_CONFIGFILE"] = null };
+        Assert.False(MangoHudIntegration.HasSystemConfiguration(env, system));
+        Directory.CreateDirectory(Path.Combine(config, "MangoHud"));
+        File.WriteAllText(Path.Combine(config, "MangoHud/MangoHud.conf"), "fps");
+        Assert.True(MangoHudIntegration.HasSystemConfiguration(env, system));
+        env["MANGOHUD_CONFIGFILE"] = Path.Combine(directory.Root, "missing.conf");
+        Assert.False(MangoHudIntegration.HasSystemConfiguration(env, system));
+        env["MANGOHUD_CONFIG"] = "fps_only";
+        Assert.True(MangoHudIntegration.HasSystemConfiguration(env, system));
+        env["MANGOHUD_CONFIG"] = null;
+        env["MANGOHUD_CONFIGFILE"] = system;
+        File.WriteAllText(system, "gpu_stats");
+        Assert.True(MangoHudIntegration.HasSystemConfiguration(env, system));
+        env["MANGOHUD_CONFIGFILE"] = null;
+        env["XDG_CONFIG_HOME"] = null;
+        Assert.True(MangoHudIntegration.HasSystemConfiguration(env, system));
+        File.Delete(system);
+        Directory.CreateDirectory(Path.Combine(directory.Root, ".config/MangoHud"));
+        File.WriteAllText(Path.Combine(directory.Root, ".config/MangoHud/MangoHud.conf"), "ram");
+        Assert.True(MangoHudIntegration.HasSystemConfiguration(env, system));
+    }
+
+    [Fact]
+    public void SystemConfigurationDoesNotGenerateInstanceOverrides()
+    {
+        using var directory = new TestDirectory();
+        InstallFixture(directory);
+        var env = new Dictionary<string, string?> { ["PATH"] = directory.Root, ["MANGOHUD_CONFIGFILE"] = "/custom/MangoHud.conf" };
+        var result = MangoHudIntegration.Apply(new() { MangoHud = new() { UseSystemConfig = true } }, env);
+        Assert.Equal("1", result["MANGOHUD"]);
+        Assert.False(result.ContainsKey("MANGOHUD_CONFIG"));
+        Assert.Equal(env["MANGOHUD_CONFIGFILE"], result["MANGOHUD_CONFIGFILE"]);
+        env["MANGOHUD_CONFIG"] = "fps_only";
+        Assert.Equal("fps_only", MangoHudIntegration.Apply(new(), env)["MANGOHUD_CONFIG"]);
+    }
+
+    [Fact]
+    public void AutomaticPreferenceRedetectsButExplicitChoicePersistsAndResetRestoresDetection()
+    {
+        var detected = true;
+        var instance = GameInstance.Create("HUD", "26.30", "Release");
+        var editor = new LaunchOptionsViewModel(instance, hasMangoHudSystemConfiguration: () => detected);
+        Assert.True(editor.MangoHudUseSystemConfig);
+        Assert.False(editor.CanEditMangoHudMetrics);
+        Assert.Null(editor.Build().MangoHud!.UseSystemConfig);
+        detected = false;
+        editor.RefreshMangoHudCommand.Execute(null);
+        Assert.False(editor.MangoHudUseSystemConfig);
+        editor.MangoHudUseSystemConfig = true;
+        Assert.True(editor.Build().MangoHud!.UseSystemConfig);
+        editor.RefreshMangoHudCommand.Execute(null);
+        Assert.True(editor.MangoHudUseSystemConfig);
+        var restored = new LaunchOptionsViewModel(instance with { LaunchOptions = editor.Build() },
+            hasMangoHudSystemConfiguration: () => false);
+        Assert.True(restored.MangoHudUseSystemConfig);
+        editor.ResetCommand.Execute(null);
+        Assert.False(editor.MangoHudUseSystemConfig);
+        Assert.Null(editor.Build().MangoHud!.UseSystemConfig);
+    }
+
+    [Fact]
     public void DetectionRequiresAnExecutableAndIgnoresRelativeDirectories()
     {
         using var directory = new TestDirectory();
@@ -46,7 +113,7 @@ public sealed class MangoHudTests
     {
         using var directory = new TestDirectory();
         InstallFixture(directory);
-        var options = new InstanceLaunchOptions { LaunchCommand = "prime-run %command%", Arguments = ["two words", "$HOME"], MangoHud = new() { Cpu = false, Ram = false } };
+        var options = new InstanceLaunchOptions { LaunchCommand = "prime-run %command%", Arguments = ["two words", "$HOME"], MangoHud = new() { UseSystemConfig = false, Cpu = false, Ram = false } };
         var defaults = new Dictionary<string, string?> { ["PATH"] = directory.Root, ["XODUS_SOCKET"] = "/private/socket", ["MANGOHUD_CONFIG"] = "full" };
         var env = MangoHudIntegration.Apply(options, defaults);
         var command = InstanceLaunchPlan.Create("/xodus", "/game", "/wine", "Game.exe", "/game", options, env);

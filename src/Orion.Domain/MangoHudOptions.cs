@@ -6,6 +6,8 @@ public enum MangoHudPosition { TopLeft, TopRight, BottomLeft, BottomRight }
 public sealed record MangoHudOptions
 {
     public bool Enabled { get; init; } = true;
+    // null follows detection until the user explicitly chooses per-instance or system settings.
+    public bool? UseSystemConfig { get; init; }
     public bool Fps { get; init; } = true;
     public bool FrameTime { get; init; }
     public bool Cpu { get; init; } = true;

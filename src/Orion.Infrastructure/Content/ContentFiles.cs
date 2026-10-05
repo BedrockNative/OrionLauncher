@@ -33,11 +33,17 @@ internal static class ContentFiles
         foreach (var segment in full[current.Length..].Split(Path.DirectorySeparatorChar, StringSplitOptions.RemoveEmptyEntries))
         {
             current = Path.Combine(current, segment);
-            if (new FileInfo(current).LinkTarget is not null || new DirectoryInfo(current).LinkTarget is not null)
-                throw new InvalidDataException("Symbolic links are not supported in game content.");
-            if (File.Exists(current) || Directory.Exists(current))
+            try
+            {
+                // GetAttributes reports ReparsePoint for file, directory and dangling
+                // symlinks. One metadata lookup replaces separate link/existence probes.
                 if ((File.GetAttributes(current) & FileAttributes.ReparsePoint) != 0)
                     throw new InvalidDataException("Linked game content is not supported.");
+            }
+            // A new destination may not exist yet; no descendants can exist below
+            // the first missing component of this already-normalized absolute path.
+            catch (FileNotFoundException) { break; }
+            catch (DirectoryNotFoundException) { break; }
         }
         return full;
     }

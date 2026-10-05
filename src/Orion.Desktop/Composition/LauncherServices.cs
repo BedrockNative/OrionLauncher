@@ -35,6 +35,7 @@ public sealed class LauncherServices : IAsyncDisposable
     public Orion.Desktop.Content.CoverStore ProjectCovers { get; }
     public Orion.Desktop.Content.AvatarStore Avatars { get; }
     private XodusService Xodus { get; }
+    public XodusSessions XodusSessions { get; }
     private Task? disposal;
 
     public LauncherServices(AppPaths paths, LauncherSettings settings, IReadOnlyList<string> command,
@@ -49,7 +50,8 @@ public sealed class LauncherServices : IAsyncDisposable
         var runner = new ProcessRunner(supervisorCommand ?? command);
         var environment = new XodusEnvironment(paths);
         Xodus = new(paths, environment, runner);
-        Account = new(paths, Runtimes, runner, environment, Xodus);
+        XodusSessions = new(paths, runner);
+        Account = new(paths, Runtimes, runner, environment, Xodus, XodusSessions);
         Catalog = new(http, paths);
         var activity = new InstanceActivity();
         Content = new(paths, activity);
@@ -57,7 +59,7 @@ public sealed class LauncherServices : IAsyncDisposable
         RtxCatalog = new(rtxHttp, releases, Path.Combine(paths.Cache, "rtx"), downloads);
         Rtx = new(paths, activity, RtxCatalog, Content);
         RtxLinks = new(paths, command, Path.Combine(AppContext.BaseDirectory, "Assets", "orion.svg"));
-        Games = new(paths, Runtimes, runner, Account, activity, Content, Rtx);
+        Games = new(paths, Runtimes, runner, Account, activity, Content, Rtx, XodusSessions);
         var desktop = new DesktopIntegration(paths, command,
             Path.Combine(AppContext.BaseDirectory, "Assets", "orion.svg"));
         Instances = new(new InstanceRepository(paths), new GameInstaller(paths, Runtimes, runner, environment, Xodus, new(downloads)), Games, desktop, activity);
@@ -71,7 +73,7 @@ public sealed class LauncherServices : IAsyncDisposable
         try { await Downloads.DisposeAsync(); }
         finally
         {
-            try { await Xodus.DisposeAsync(); }
+            try { await XodusSessions.DisposeAsync(); await Xodus.DisposeAsync(); }
             finally { CurseForge.Dispose(); Covers.Dispose(); ProjectCovers.Dispose(); http.Dispose(); downloads.Dispose(); pictures.Dispose(); rtxHttp.Dispose(); }
         }
     }

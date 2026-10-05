@@ -14,7 +14,11 @@ public sealed class ChangelogTests
         text.SetLanguage(language);
         var entries = ChangelogCatalog.Read(text, language);
         var current = typeof(ChangelogCatalog).Assembly.GetName().Version!;
-        Assert.Equal(8, entries.Count);
+        var releases = entries.Where(entry => !entry.IsLegacy).ToArray();
+        var historical = entries.Where(entry => entry.IsLegacy).ToArray();
+        Assert.Equal(new[] { "1.0.2", "1.0.1", "1.0.0" }.Where(version => Version.Parse(version) <= current),
+            releases.Select(entry => entry.Title.Split(' ')[0]));
+        Assert.Equal(6, historical.Length);
         Assert.False(entries[0].IsLegacy);
         Assert.StartsWith(current.ToString(3), entries[0].Title);
         Assert.StartsWith("# Orion Launcher " + current.ToString(3), entries[0].Content);
@@ -25,9 +29,8 @@ public sealed class ChangelogTests
         Assert.All(entries.Where(entry => !entry.IsLegacy), entry =>
             Assert.True(Version.Parse(entry.Title.Split(' ')[0]) <= current));
         Assert.DoesNotContain("desenvolvimento", entries[0].Title);
-        Assert.StartsWith("0.5.0", entries[2].Title);
-        Assert.Contains("Historical release", ChangelogCatalog.Read(new Localizer(), "unknown")[2].Title);
-        Assert.All(entries.Skip(2), entry => Assert.True(entry.IsLegacy));
+        Assert.StartsWith("0.5.0", historical[0].Title);
+        Assert.Contains("Historical release", ChangelogCatalog.Read(new Localizer(), "unknown").First(entry => entry.IsLegacy).Title);
         Assert.All(entries, entry => Assert.NotEmpty(ChangelogCatalog.Format(entry.Content)));
         var catalogNotes = entries.Single(e => e.Title.StartsWith("0.4.2"));
         Assert.Contains(language == "pt-BR" ? "Catálogo" : "catalog", catalogNotes.Content);
