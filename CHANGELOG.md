@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.0.2 — in development
+## 1.0.2
 
 Lean Linux packaging, system MangoHud configuration, optional startup runtime-update
 checks, persistent Xodus services, responsive game preparation and faster RTX
