@@ -183,7 +183,7 @@ public partial class MainViewModel : ObservableObject
     [RelayCommand] private Task RefreshVersionsAsync() => WorkAsync(async ct =>
     {
         var catalog = await services.Catalog.GetAsync(ct);
-        Versions.Clear(); foreach (var version in catalog) Versions.Add(version);
+        Versions.Clear(); foreach (var version in GameVersion.WithRollingChoices(catalog)) Versions.Add(version);
         SelectedVersion = Versions.FirstOrDefault(v => v.Channel == "Release");
         if (services.Catalog.UsedCachedData) Error = Text["CatalogOffline"];
     });
@@ -192,7 +192,7 @@ public partial class MainViewModel : ObservableObject
     {
         var version = SelectedVersion ?? throw new InvalidOperationException(Text["Version"]);
         var instance = GameInstance.Create(NewName, version.Version, version.Channel) with
-        { LaunchOptions = CreationEditor.Build(), CoverId = CreationEditor.SelectedCover.Id, DesktopShortcut = CreationEditor.DesktopShortcut };
+        { TrackUpdates = version.TrackUpdates, LaunchOptions = CreationEditor.Build(), CoverId = CreationEditor.SelectedCover.Id, DesktopShortcut = CreationEditor.DesktopShortcut };
         await services.Downloads.EnqueueAsync(instance, version.Download.AbsoluteUri);
         ShowCreate = false;
         Page = "downloads";
@@ -211,7 +211,7 @@ public partial class MainViewModel : ObservableObject
 
     [RelayCommand] private Task LoginAsync() => WorkAsync(async ct =>
     {
-        RequireNoGames(); InvalidateAccounts(); await services.Account.LoginAsync(Reporter(), ct);
+        InvalidateAccounts(); await services.Account.LoginAsync(Reporter(), ct);
         SetAccounts(await services.Account.RefreshAsync(Reporter(), ct));
     });
     [RelayCommand] private Task LogoutAsync() => WorkAsync(async ct =>
@@ -228,7 +228,6 @@ public partial class MainViewModel : ObservableObject
 
     public Task SelectAccountAsync(XboxAccount account) => WorkAsync(async ct =>
     {
-        RequireNoGames();
         InvalidateAccounts();
         SetAccounts(await services.Account.ChangeAsync("select", account.Id, Reporter(), ct));
     });

@@ -62,6 +62,7 @@ public partial class LaunchOptionsViewModel : ObservableObject
     [ObservableProperty] private string height;
     [ObservableProperty] private bool fullscreen;
     [ObservableProperty] private bool showLogOnLaunch;
+    [ObservableProperty] private bool orionOptimizations;
     [ObservableProperty] [NotifyPropertyChangedFor(nameof(CanEditMangoHudMetrics))] private bool mangoHudEnabled;
     [ObservableProperty] [NotifyPropertyChangedFor(nameof(CanEditMangoHudMetrics))] private bool mangoHudUseSystemConfig;
     public bool CanEditMangoHudMetrics => MangoHudEnabled && !MangoHudUseSystemConfig;
@@ -155,6 +156,7 @@ public partial class LaunchOptionsViewModel : ObservableObject
         height = (options.Resolution?.Height ?? 720).ToString(CultureInfo.InvariantCulture);
         fullscreen = options.Fullscreen;
         showLogOnLaunch = options.ShowLogOnLaunch;
+        orionOptimizations = options.OrionOptimizations;
         LoadMangoHud(options.MangoHud ?? new());
         RefreshMangoHud();
         selectedMonitorResolution = options.ResolutionLocked && options.Resolution is { } size
@@ -197,6 +199,7 @@ public partial class LaunchOptionsViewModel : ObservableObject
         {
             Arguments = Lines(ArgumentLines), Environment = variables,
             LaunchCommand = LaunchCommand,
+            OrionOptimizations = OrionOptimizations,
             AccountId = SelectedAccount?.Id,
             Resolution = resolution, ResolutionLocked = CustomResolution && ResolutionIsLocked,
             Fullscreen = CustomResolution && Fullscreen, ShowLogOnLaunch = ShowLogOnLaunch,
@@ -234,7 +237,7 @@ public partial class LaunchOptionsViewModel : ObservableObject
         LaunchCommand = "%command%";
         Width = "1280"; Height = "720"; Fullscreen = false;
         SelectedMonitorResolution = MonitorResolutions[0];
-        ShowLogOnLaunch = false;
+        ShowLogOnLaunch = false; OrionOptimizations = false;
         LoadMangoHud(new());
         DesktopShortcut = false;
         SelectedAccount = AccountChoices[0];

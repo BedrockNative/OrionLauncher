@@ -1,0 +1,3 @@
+[submodule "third_party/xvdtool"]
+	path = third_party/xvdtool
+	url = https://github.com/AmethystAPI/xvdtool.git

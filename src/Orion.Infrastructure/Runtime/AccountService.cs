@@ -77,7 +77,7 @@ public sealed class AccountService(AppPaths paths, RuntimeManager runtimes, Proc
         if (action is not ("select" or "remove") || id.Length != 64 || !id.All(char.IsAsciiHexDigit))
             throw new ArgumentException("Invalid account operation.");
         var installed = await runtimes.EnsureAsync(RuntimeDefinition.Xodus, progress, ct);
-        if (action == "remove" && sessions is not null) await sessions.ResetAsync(ct);
+        if (action == "remove" && sessions is not null) await sessions.ResetAccountAsync(id, ct);
         await service.ResetAsync(ct);
         return await ReadAsync(installed, ["accounts", "--unlock", action, id], ct);
     }
@@ -120,8 +120,10 @@ public sealed class AccountService(AppPaths paths, RuntimeManager runtimes, Proc
     private async Task RunAsync(string action, IProgress<OperationProgress>? progress, CancellationToken ct)
     {
         var xodus = await runtimes.EnsureAsync(RuntimeDefinition.Xodus, progress, ct);
-        if (sessions is not null) await sessions.ResetAsync(ct);
-        // The service keeps tokens in memory; end our service before changing the profile's account.
+        // Saved-account services are pinned by XODUS_ACCOUNT_ID. Adding an account
+        // changes the default for future launches, not identities in running games.
+        if (action == "logout" && sessions is not null) await sessions.ResetAsync(ct);
+        // Only the unpinned management service follows the profile's default account.
         await service.ResetAsync(ct);
         progress?.Report(new(action == "login" ? "Complete any desktop keyring prompt, then sign in through the Xodus window" : "Signing out of the Orion profile"));
         await runner.RunAsync(new(RuntimeManager.FindExecutable(xodus.Directory, "xodus-cli"), [action],

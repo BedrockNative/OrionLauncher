@@ -1,8 +1,7 @@
 # Development
 
-Install .NET SDK 10, CMake 3.20+ and the x86_64 MinGW-w64 C++ compiler.
-On Arch Linux the native build dependencies are `cmake` and `mingw-w64-gcc`;
-on Ubuntu they are `cmake` and `g++-mingw-w64-x86-64`.
+Install .NET SDK 10 and initialize the XvdTool dependency with
+`git submodule update --init --recursive`. LibXboxOne is built with the launcher.
 
 ```sh
 dotnet restore OrionLauncher.slnx
@@ -28,27 +27,6 @@ the executable. Official AppImage and tar.gz releases include private native
 dependencies and pinned runtimes. Core system libraries and the common desktop
 stack (X11/XCB, audio and device/session clients) come from the host;
 see [RELEASING.md](../../RELEASING.md) for the baseline and main-only workflow.
-
-## Orion.Native
-
-`src/Orion.Native` is a CMake C++20 project targeting Windows x64 for Wine.
-The desktop MSBuild project invokes CMake as a build dependency and copies
-`Orion.Native.dll` to build and publish outputs. Incremental CMake builds reuse
-`src/Orion.Native/obj/<Configuration>/windows-x64`; missing compilers fail the build
-instead of silently shipping without the DLL. CI installs the same toolchain.
-
-For a standalone build:
-
-```sh
-cmake -S src/Orion.Native -B src/Orion.Native/obj/manual -DCMAKE_TOOLCHAIN_FILE="$PWD/src/Orion.Native/cmake/mingw-w64.cmake" -DCMAKE_BUILD_TYPE=Release
-cmake --build src/Orion.Native/obj/manual
-```
-
-The scaffold exports `OrionNativeHello()`, which writes a hello-world line to
-`std::cout` when called by a Windows/Wine host. It deliberately does not perform
-I/O in `DllMain`, inject itself into the game, or load a Windows DLL into the Linux
-launcher. Resolution integration is not implemented yet. GCC/C++ support libraries
-are linked statically; Windows system runtime imports remain normal Wine dependencies.
 
 ## Tests
 

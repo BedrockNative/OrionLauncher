@@ -14,6 +14,15 @@ public static class InstanceLaunchPlan
         return result;
     }
 
+    public static ProcessCommand CreateDirect(string wine, string executable, string workingDirectory,
+        InstanceLaunchOptions options, IReadOnlyDictionary<string, string?> environment)
+    {
+        options.ValidateLaunchInputs();
+        var template = LaunchCommandTemplate.Parse(options.LaunchCommand);
+        string[] command = [.. template[..^1], wine, executable, .. options.Arguments];
+        return new(command[0], command[1..], workingDirectory, environment);
+    }
+
     public static ProcessCommand Create(string xodus, string game, string wine, string executable, string workingDirectory,
         InstanceLaunchOptions options, IReadOnlyDictionary<string, string?> environment)
     {

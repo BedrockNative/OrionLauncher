@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.0.3 — in development
+
+Full XvdTool extraction, rolling Latest Release/Preview versions, optional Orion
+optimizations, direct Wine launch, quieter logs and desktop-session fixes:
+[English](docs/en_US/changelog/release/v1.0.3.md) ·
+[Português (Brasil)](docs/pt_BR/changelog/release/v1.0.3.md).
+
 ## 1.0.2
 
 Lean Linux packaging, system MangoHud configuration, optional startup runtime-update

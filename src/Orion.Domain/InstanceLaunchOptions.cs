@@ -19,6 +19,7 @@ public sealed record InstanceLaunchOptions
     public GameResolution? Resolution { get; init; }
     public bool ResolutionLocked { get; init; }
     public bool Fullscreen { get; init; }
+    public bool OrionOptimizations { get; init; }
     public bool ShowLogOnLaunch { get; init; }
     public MangoHudOptions? MangoHud { get; init; } = new();
 

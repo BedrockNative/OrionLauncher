@@ -36,6 +36,7 @@ public sealed class LauncherServices : IAsyncDisposable
     public Orion.Desktop.Content.AvatarStore Avatars { get; }
     private XodusService Xodus { get; }
     public XodusSessions XodusSessions { get; }
+    private readonly ContentKeyCache contentKeys = new();
     private Task? disposal;
 
     public LauncherServices(AppPaths paths, LauncherSettings settings, IReadOnlyList<string> command,
@@ -59,10 +60,13 @@ public sealed class LauncherServices : IAsyncDisposable
         RtxCatalog = new(rtxHttp, releases, Path.Combine(paths.Cache, "rtx"), downloads);
         Rtx = new(paths, activity, RtxCatalog, Content);
         RtxLinks = new(paths, command, Path.Combine(AppContext.BaseDirectory, "Assets", "orion.svg"));
-        Games = new(paths, Runtimes, runner, Account, activity, Content, Rtx, XodusSessions);
+        var installer = new GameInstaller(paths, Runtimes, runner, environment, Xodus, new(downloads), new XvdPackageExtractor(paths, runner, contentKeys), Account);
+        Games = new(paths, Runtimes, runner, Account, activity, Content, Rtx, XodusSessions,
+            new OrionOptimization(paths, releases, new(downloads)),
+            new RollingGameUpdate(paths, Catalog, installer));
         var desktop = new DesktopIntegration(paths, command,
             Path.Combine(AppContext.BaseDirectory, "Assets", "orion.svg"));
-        Instances = new(new InstanceRepository(paths), new GameInstaller(paths, Runtimes, runner, environment, Xodus, new(downloads)), Games, desktop, activity);
+        Instances = new(new InstanceRepository(paths), installer, Games, desktop, activity);
         Downloads = new(paths, async (instance, source, progress, ct) => { await Instances.CreateAsync(instance, source, progress, ct); });
     }
 
@@ -74,7 +78,7 @@ public sealed class LauncherServices : IAsyncDisposable
         finally
         {
             try { await XodusSessions.DisposeAsync(); await Xodus.DisposeAsync(); }
-            finally { CurseForge.Dispose(); Covers.Dispose(); ProjectCovers.Dispose(); http.Dispose(); downloads.Dispose(); pictures.Dispose(); rtxHttp.Dispose(); }
+            finally { contentKeys.Dispose(); XvdPackageExtractor.ClearLibraryKeys(); CurseForge.Dispose(); Covers.Dispose(); ProjectCovers.Dispose(); http.Dispose(); downloads.Dispose(); pictures.Dispose(); rtxHttp.Dispose(); }
         }
     }
 }

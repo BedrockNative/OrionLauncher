@@ -27,6 +27,7 @@ public sealed class InstallationGateTests
                 mkdir -p "$4"
                 printf 'encrypted' > "$4/Minecraft.Windows.exe"
                 printf 'metadata' > "$4/.xodus-streaming.msixvc"
+                printf '<Game/>' > "$4/MicrosoftGame.config"
                 ;;
               *) exit 9 ;;
             esac

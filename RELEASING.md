@@ -52,7 +52,7 @@ pacote Alpine/musl, ARM ou Windows. Não precisa instalar .NET, SDK, CMake ou Mi
 no computador que executará o launcher.
 
 O pacote inclui .NET self-contained, Avalonia/Skia/HarfBuzz/Inter,
-`Orion.Native.dll`, Xodus, WineGDK (com os componentes distribuídos pelo fork),
+Xodus, WineGDK (com os componentes distribuídos pelo fork),
 Wine Mono e Gecko nas versões esperadas pelo Wine (sem prompts de download no
 primeiro prefixo), GTK/GLib/WebKit e seus processos auxiliares de login, GStreamer,
 TLS/ICU, fontes e dependências ELF privadas. Bibliotecas comuns do sistema e do

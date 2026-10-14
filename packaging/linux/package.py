@@ -324,7 +324,7 @@ def build(published, output):
         # Optional legacy LTTng 2.12 profiling provider (ABI 0), unused by the
         # launcher. CoreCLR, EventPipe, dumps and launcher/game logs are retained.
         (app / "libcoreclrtraceptprovider.so").unlink(missing_ok=True)
-        for required in ("OrionLauncher", "Orion.Native.dll", "libcoreclr.so", "libSkiaSharp.so", "libHarfBuzzSharp.so"):
+        for required in ("OrionLauncher", "libcoreclr.so", "libSkiaSharp.so", "libHarfBuzzSharp.so"):
             if not (app / required).is_file():
                 raise FileNotFoundError(f"Missing published stack component: {required}")
         for name in ("xodus", "winegdk"):

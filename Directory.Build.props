@@ -10,4 +10,11 @@
     <RepositoryUrl>https://github.com/BedrockNative/OrionLauncher</RepositoryUrl>
     <NuGetAudit>true</NuGetAudit>
   </PropertyGroup>
+  <!-- Upstream library predates the launcher's nullable/analyzer policy. -->
+  <PropertyGroup Condition="'$(MSBuildProjectName)' == 'LibXboxOne'">
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <EnableNETAnalyzers>false</EnableNETAnalyzers>
+  </PropertyGroup>
 </Project>

@@ -46,6 +46,7 @@ public sealed class GameLaunchThreadingTests
             var launcher = new GameLauncher(dir.Paths, runtimes, runner, accounts, activity, content, rtx, sessions);
             var instance = await RtxTests.Setup(dir);
             await File.WriteAllTextAsync(Path.Combine(dir.Paths.Game(instance.Id), ".xodus-streaming.msixvc"), "fixture");
+            await File.WriteAllTextAsync(Path.Combine(dir.Paths.Game(instance.Id), "AppxManifest.xml"), GameConfigurationTests.Manifest);
             var label = new TextBlock();
             var window = new Window { Content = label }; window.Show();
             using var cancellation = new CancellationTokenSource(TimeSpan.FromSeconds(20));

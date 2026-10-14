@@ -21,6 +21,13 @@ public partial class MainWindow : Window, IWindowDialogs
         LayoutUpdated += (_, _) => ConstrainLog();
         Closed += (_, _) => { CloseLogWindows(); (DataContext as MainViewModel)?.DisposeProfiles(); UnbindAppearance(); };
     }
+    public void Reveal()
+    {
+        Show();
+        if (WindowState == WindowState.Minimized) WindowState = WindowState.Normal;
+        Activate();
+    }
+
     private void UnbindAppearance()
     {
         Orion.Desktop.Theming.ThemeManager.Changed -= MotionChanged;

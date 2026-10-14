@@ -1,7 +1,13 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  <ItemGroup><ProjectReference Include="../Orion.Application/Orion.Application.csproj" /></ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../Orion.Application/Orion.Application.csproj" />
+    <ProjectReference Include="../../third_party/xvdtool/LibXboxOne/LibXboxOne.csproj" />
+  </ItemGroup>
   <ItemGroup><SupportedPlatform Include="linux" /></ItemGroup>
   <ItemGroup Condition="Exists('obj/curseforge.key')">
     <EmbeddedResource Include="obj/curseforge.key" LogicalName="Orion.CurseForge.Credential" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="AsmResolver.PE" Version="6.0.1" />
   </ItemGroup>
 </Project>

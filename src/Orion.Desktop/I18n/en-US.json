@@ -1,4 +1,6 @@
 {
+  "OrionOptimizations": "Enable Orion optimizations",
+  "OrionOptimizationsHint": "Downloads Orion.Optimization on launch. Optimizations activate only on compatible game builds.",
   "FileManager": "File manager",
   "FileManagerSystem": "System default",
   "FileManagerNotInstalled": "Not installed",
@@ -292,7 +294,7 @@
   "NoAccounts": "No account signed in", "ActiveAccount": "Active account", "SavedAccount": "Saved account",
   "AddAccount": "Add Microsoft account", "UseAccount": "Use this account", "RemoveAccount": "Remove account", "RefreshAccounts": "Refresh accounts",
   "RemoveAccountHint": "Remove this account from Orion only? Installed games are kept. If this is the active account, the next saved account becomes active.",
-  "AccountsHint": "Accounts and credentials stay in Orion's private Xodus profile. The active account is used for Xbox services; any saved account that purchased Minecraft for PC can authorize an installation. Your desktop may ask you to unlock its keyring.",
+  "AccountsHint": "Accounts and credentials stay in Orion's private Xodus profile. The active account is used for Xbox services; any saved account that purchased Minecraft for PC can authorize an installation. Your desktop may ask you to unlock its keyring. Add or switch accounts without interrupting running games. Choose a fixed account in each instance’s Launch options; instances using the same account share its Xodus service, while different accounts stay isolated.",
   "ArgumentsTab": "Arguments", "EnvironmentTab": "Environment", "ResolutionTab": "Resolution",
   "LaunchOptions": "Launch options", "GameArguments": "Game arguments / flags",
   "GameArgumentsHint": "One argument per line, without enclosing quotes. Values with spaces stay on one line. These are game arguments, not shell commands.",

@@ -5,6 +5,7 @@ public sealed record GameInstance(Guid Id, string Name, string Version, string C
 {
     public InstanceLaunchOptions LaunchOptions { get; init; } = new();
     public string? CoverId { get; init; }
+    public bool TrackUpdates { get; init; }
     public bool DesktopShortcut { get; init; }
 
     public static void ValidateCoverId(string? id)

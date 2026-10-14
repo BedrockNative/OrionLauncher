@@ -10,9 +10,14 @@ public sealed record XodusSession(XodusEnvironment Environment, XodusService Ser
 public sealed class XodusSessions(AppPaths paths, ProcessRunner runner) : IAsyncDisposable
 {
     private readonly SemaphoreSlim gate = new(1, 1);
-    private readonly Dictionary<string, XodusSession> sessions = new(StringComparer.Ordinal);
-    private readonly List<Task> starts = [];
-    private CancellationTokenSource lifetime = new();
+    private sealed class Entry(XodusSession session)
+    {
+        public XodusSession Session { get; } = session;
+        public CancellationTokenSource Lifetime { get; } = new();
+        public List<Task> Starts { get; } = [];
+    }
+
+    private readonly Dictionary<string, Entry> sessions = new(StringComparer.Ordinal);
     private bool disposed;
     private Task? disposal;
 
@@ -26,18 +31,18 @@ public sealed class XodusSessions(AppPaths paths, ProcessRunner runner) : IAsync
         try
         {
             ObjectDisposedException.ThrowIf(disposed, this);
-            lifetime.Token.ThrowIfCancellationRequested();
             var key = accountId ?? "";
-            if (!sessions.TryGetValue(key, out session!))
+            if (!sessions.TryGetValue(key, out var entry))
             {
                 // Stable, short socket names do not reveal the account identifier.
                 var environment = XodusEnvironment.ForAccount(paths, accountId);
-                session = new(environment, new(paths, environment, runner));
-                sessions.Add(key, session);
+                entry = new(new(environment, new(paths, environment, runner)));
+                sessions.Add(key, entry);
             }
-            starts.RemoveAll(task => { if (task.IsFaulted) _ = task.Exception; return task.IsCompleted; });
-            ready = session.Service.EnsureAsync(runtime, lifetime.Token);
-            starts.Add(ready);
+            session = entry.Session;
+            entry.Starts.RemoveAll(task => { if (task.IsFaulted) _ = task.Exception; return task.IsCompleted; });
+            ready = session.Service.EnsureAsync(runtime, entry.Lifetime.Token);
+            entry.Starts.Add(ready);
         }
         finally { gate.Release(); }
         // A slow account/keyring must not block an already-ready account. Cancelling
@@ -63,14 +68,9 @@ public sealed class XodusSessions(AppPaths paths, ProcessRunner runner) : IAsync
         try
         {
             ObjectDisposedException.ThrowIf(disposed, this);
-            // The pool gate only protects scheduling, not service readiness.
-            // Cancel after acquiring it so a cancelled reset cannot poison the
-            // current generation or race with another reset replacing its token.
-            lifetime.Cancel();
-            await DrainStartsAsync();
-            foreach (var session in sessions.Values) await session.Service.DisposeAsync();
+            foreach (var entry in sessions.Values) entry.Lifetime.Cancel();
+            foreach (var entry in sessions.Values) await StopEntryAsync(entry);
             sessions.Clear();
-            lifetime.Dispose(); lifetime = new();
         }
         finally { gate.Release(); }
     }
@@ -84,19 +84,33 @@ public sealed class XodusSessions(AppPaths paths, ProcessRunner runner) : IAsync
         {
             if (disposed) return;
             disposed = true;
-            lifetime.Cancel();
-            await DrainStartsAsync();
-            foreach (var session in sessions.Values) await session.Service.DisposeAsync();
+            foreach (var entry in sessions.Values) entry.Lifetime.Cancel();
+            foreach (var entry in sessions.Values) await StopEntryAsync(entry);
             sessions.Clear();
-            lifetime.Dispose();
         }
         finally { gate.Release(); }
     }
 
-    private async Task DrainStartsAsync()
+    // Reset only the removed account, including a pending keyring/startup wait.
+    // Other accounts retain their service process and socket.
+    public async Task ResetAccountAsync(string? accountId, CancellationToken ct)
     {
-        try { await Task.WhenAll(starts); }
+        await gate.WaitAsync(ct);
+        try
+        {
+            ObjectDisposedException.ThrowIf(disposed, this);
+            if (!sessions.Remove(accountId ?? "", out var entry)) return;
+            entry.Lifetime.Cancel();
+            await StopEntryAsync(entry);
+        }
+        finally { gate.Release(); }
+    }
+
+    private static async Task StopEntryAsync(Entry entry)
+    {
+        try { await Task.WhenAll(entry.Starts); }
         catch (Exception) { /* Startup callers report failures; shutdown still owns cleanup. */ }
-        starts.Clear();
+        await entry.Session.Service.DisposeAsync();
+        entry.Lifetime.Dispose();
     }
 }

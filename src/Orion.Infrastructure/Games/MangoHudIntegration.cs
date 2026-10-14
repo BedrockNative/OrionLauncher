@@ -63,11 +63,11 @@ public static class MangoHudIntegration
         if (hud.UseSystemConfig ?? HasSystemConfiguration(result))
         {
             // Preserve inherited/advanced settings and let MangoHud select its own file.
-            report?.Invoke("MangoHud enabled with system configuration; instance metrics are not applied.");
+
             return result;
         }
         result["MANGOHUD_CONFIG"] = Configuration(hud);
-        report?.Invoke("MangoHud enabled with this instance's metrics (system Vulkan layer). Sensor availability depends on the driver and hardware.");
+
         return result;
     }
 
