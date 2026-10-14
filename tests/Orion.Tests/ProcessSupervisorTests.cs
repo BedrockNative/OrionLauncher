@@ -16,7 +16,7 @@ public sealed class ProcessSupervisorTests
         Assert.Equal("literal $HOME ; value", result);
         var log = Path.Combine(directory.Root, "supervised.log");
         await runner.RunAsync(new("/usr/bin/printf", ["ok\\n"], directory.Root), log, default);
-        Assert.Contains("[printf] Exited with code 0", File.ReadAllText(log));
+        Assert.DoesNotContain("Exited with code 0", File.ReadAllText(log));
         Assert.DoesNotContain("[dotnet] Exited", File.ReadAllText(log));
     }
 

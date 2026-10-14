@@ -12,9 +12,14 @@ internal static class Program
     internal static SingleInstance Instance { get; private set; } = null!;
     internal static LaunchRequest Request { get; private set; } = new();
 
+    internal static bool SystemShutdown { get; set; }
+
     [STAThread]
     public static int Main(string[] args)
     {
+        ProcessRunner.CaptureDesktopSession();
+        if (Environment.GetEnvironmentVariable(Orion.Infrastructure.Games.OptimizationSourceExport.DestinationVariable) is { } destination)
+            return Orion.Infrastructure.Games.OptimizationSourceExport.Run(args, destination);
         // No UI, single-instance lock or credential access in the child supervisor.
         if (args.FirstOrDefault() == ProcessSupervisor.Switch)
             return ProcessSupervisor.RunAsync(args[1..]).GetAwaiter().GetResult();
@@ -43,7 +48,9 @@ internal static class Program
                     // The UI loop has ended. Also allow cleanup after an unexpected
                     // UI exit without posting new continuations to a stopped dispatcher.
                     SynchronizationContext.SetSynchronizationContext(null);
-                    Services.DisposeAsync().AsTask().GetAwaiter().GetResult();
+                    var cleanup = Services.DisposeAsync().AsTask();
+                    if (SystemShutdown) { try { cleanup.Wait(TimeSpan.FromSeconds(2)); } catch (Exception) { } }
+                    else cleanup.GetAwaiter().GetResult();
                 }
             }
             finally { Instance.DisposeAsync().AsTask().GetAwaiter().GetResult(); }

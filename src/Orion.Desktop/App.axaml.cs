@@ -53,11 +53,14 @@ public partial class App : Avalonia.Application
                 if (model.KeepInBackground) window.Hide();
                 else await QuitAsync(desktop);
             };
-            desktop.ShutdownRequested += async (_, e) =>
+            desktop.ShutdownRequested += (_, _) =>
             {
                 if (quitting) return;
-                e.Cancel = true;
-                await QuitAsync(desktop);
+                quitting = true;
+                Program.SystemShutdown = true;
+                // Do not cancel logout/shutdown or open a confirmation dialog.
+                _ = model.StopAllAsync();
+                tray?.Dispose();
             };
             ready = model.InitializeAsync();
             Program.Instance.Listen(request => Dispatcher.UIThread.Post(async () => await HandleAsync(request)));
@@ -88,7 +91,7 @@ public partial class App : Avalonia.Application
         }
     }
 
-    private void Reveal() { window.Show(); window.WindowState = WindowState.Normal; window.Activate(); }
+    private void Reveal() => window.Reveal();
 
     private async Task QuitAsync(IClassicDesktopStyleApplicationLifetime desktop)
     {

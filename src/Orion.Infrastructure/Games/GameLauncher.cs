@@ -12,7 +12,7 @@ namespace Orion.Infrastructure.Games;
 
 public sealed class GameLauncher(AppPaths paths, RuntimeManager runtimes, ProcessRunner runner,
     AccountService accounts, InstanceActivity activity, Orion.Infrastructure.Content.InstanceContentService content,
-    Orion.Infrastructure.Rtx.RtxService rtx, XodusSessions sessions) : IGameLauncher
+    Orion.Infrastructure.Rtx.RtxService rtx, XodusSessions sessions, OrionOptimization? optimization = null, RollingGameUpdate? updates = null) : IGameLauncher
 {
     private readonly ConcurrentDictionary<Guid, byte> running = new();
     public bool IsRunning(Guid id) => running.ContainsKey(id);
@@ -30,26 +30,30 @@ public sealed class GameLauncher(AppPaths paths, RuntimeManager runtimes, Proces
         if (!running.TryAdd(instance.Id, 0)) throw new InvalidOperationException("This instance is already running.");
         using var journal = new InstanceJournal(paths, instance.Id, null, progress);
         progress = journal;
+        var verbose = Environment.GetEnvironmentVariable("ORION_DIAGNOSTICS") == "1";
         var preparation = Stopwatch.StartNew();
         var previous = 0L;
         void Checkpoint(string stage)
         {
             var elapsed = preparation.ElapsedMilliseconds;
-            ProcessLog.Event(journal.Path, "Launch timing", $"{stage}: {elapsed - previous} ms; total {elapsed} ms");
+            if (verbose) ProcessLog.Event(journal.Path, "Launch timing", $"{stage}: {elapsed - previous} ms; total {elapsed} ms");
             previous = elapsed;
             cancellationToken.ThrowIfCancellationRequested();
         }
         try
         {
-            ProcessLog.Event(journal.Path, "Launch timing", "Preparing game launch");
+
             progress?.Report(new("Preparing game launch"));
             cancellationToken.ThrowIfCancellationRequested();
             content.Recover(instance.Id);
+            if (updates is not null) instance = await updates.PrepareAsync(instance, progress, cancellationToken);
             Checkpoint("Content recovery");
             var options = instance.LaunchOptions ?? new();
             options.ValidateLaunchInputs();
             var game = paths.Game(instance.Id);
             var gameExecutable = GameLayout.ValidatedExecutable(game);
+            await GameConfiguration.EnsureAsync(game, gameExecutable, instance.Channel, cancellationToken);
+            File.Delete(Path.Combine(paths.Instance(instance.Id), "launch-optimized-wine"));
             Checkpoint("Game files");
             var xodus = await runtimes.EnsureAsync(RuntimeDefinition.Xodus, progress, cancellationToken);
             Checkpoint("Xodus runtime");
@@ -63,7 +67,7 @@ public sealed class GameLauncher(AppPaths paths, RuntimeManager runtimes, Proces
             var wine = await runtimes.EnsureAsync(RuntimeDefinition.WineGdk, progress, cancellationToken);
             Checkpoint("WineGDK runtime");
             var rtxActive = rtx.PrepareLaunchUnderLease(instance.Id, progress, cancellationToken,
-                (stage, duration) => ProcessLog.Event(journal.Path, "RTX timing", $"{stage}: {duration.TotalMilliseconds:F1} ms"));
+                (stage, duration) => { if (verbose) ProcessLog.Event(journal.Path, "RTX timing", $"{stage}: {duration.TotalMilliseconds:F1} ms"); });
             Checkpoint("RTX validation and preferences");
             var env = session.Environment.Create(paths.Prefix(instance.Id));
             var explicitNgx = options.Environment.TryGetValue("NVIDIA_WINE_DLL_DIR", out var configuredNgx)
@@ -96,15 +100,44 @@ public sealed class GameLauncher(AppPaths paths, RuntimeManager runtimes, Proces
                 Checkpoint("Graphics environment");
                 var executable = Path.GetRelativePath(game, gameExecutable).Replace('/', '\\');
                 await using var diagnostics = new GameSessionDiagnostics(paths.Instance(instance.Id), log);
-                await diagnostics.EnableContentLogsAsync(cancellationToken);
-                ProcessLog.Event(log, "Diagnostics", $"Minecraft {instance.Version}; WineGDK {wine.Tag}; Xodus {xodus.Tag}. Wine, DXVK and VKD3D console output is captured; custom logging environment overrides remain supported.");
+                if (verbose) await diagnostics.EnableContentLogsAsync(cancellationToken);
+                if (verbose) ProcessLog.Event(log, "Versions", $"Minecraft {instance.Version}; WineGDK {wine.Tag}; Xodus {xodus.Tag}");
                 diagnostics.Start();
                 Checkpoint("Game diagnostics");
+                if (options.OrionOptimizations)
+                {
+                    if (optimization is null) throw new InvalidOperationException("Orion optimization loader is unavailable.");
+                    async Task<byte[]> ReadLegacy(CancellationToken ct)
+                    {
+                        var temporary = Path.Combine(paths.Instance(instance.Id), ".decrypted-" + Guid.NewGuid().ToString("N") + ".exe");
+                        var exportEnvironment = new Dictionary<string, string?>(gameEnvironment)
+                        { [OptimizationSourceExport.DestinationVariable] = temporary };
+                        // Xodus supplies the decrypted bytes once; Orion then reuses its disk copy.
+                        var host = Path.Combine(AppContext.BaseDirectory, "OrionLauncher");
+                        if (!File.Exists(host)) throw new IOException("The Orion apphost is required to prepare a legacy encrypted installation.");
+                        try
+                        {
+                            await runner.RunAsync(new(RuntimeManager.FindExecutable(xodus.Directory, "xodus-cli"),
+                                XodusGameCommands.Play(game, host, executable), game, exportEnvironment), log, ct);
+                            return await File.ReadAllBytesAsync(temporary, ct);
+                        }
+                        finally { if (File.Exists(temporary)) File.Delete(temporary); }
+                    }
+                    gameExecutable = await optimization.PrepareAsync(instance.Id, gameExecutable, progress, cancellationToken,
+                        GameLayout.IsFullyDecrypted(game) ? null : ReadLegacy);
+                    executable = Path.GetRelativePath(game, gameExecutable).Replace('/', '\\');
+                    gameEnvironment["ORION_OPTIMIZATION_AUTOSTART"] = "1";
+                    Checkpoint("Orion optimizations");
+                }
                 progress?.Report(new($"Playing {instance.Name}"));
-                var command = InstanceLaunchPlan.Create(RuntimeManager.FindExecutable(xodus.Directory, "xodus-cli"),
+                var command = options.OrionOptimizations || GameLayout.IsFullyDecrypted(game)
+                    ? InstanceLaunchPlan.CreateDirect(wineBinary, gameExecutable, Path.GetDirectoryName(gameExecutable)!, options, gameEnvironment)
+                    : InstanceLaunchPlan.Create(RuntimeManager.FindExecutable(xodus.Directory, "xodus-cli"),
                     game, wineBinary, executable, Path.GetDirectoryName(gameExecutable)!, options, gameEnvironment);
-                await runner.RunAsync(command, log, cancellationToken, diagnostics.ObserveOutput);
-                await runner.RunAsync(new(env["WINESERVER"]!, ["-w"], game, env), log, cancellationToken);
+                await runner.RunAsync(command, log, cancellationToken, diagnostics.ObserveOutput, TimeSpan.FromMilliseconds(250));
+                // Xodus has observed the game process exit. Stop this private prefix's
+                // remaining desktop helpers, then retain wineserver -w for cleanup.
+                await WineServer.StopAsync(runner, env["WINESERVER"]!, game, env, log);
                 await diagnostics.DisposeAsync();
                 if (diagnostics.HasUnhandledException)
                     throw new IOException($"Wine reported an unhandled exception during the game session, even though the launch process returned success. See {log}");

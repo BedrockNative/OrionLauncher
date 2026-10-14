@@ -5,6 +5,9 @@
     <Project Path="src/Orion.Infrastructure/Orion.Infrastructure.csproj" />
     <Project Path="src/Orion.Desktop/Orion.Desktop.csproj" />
   </Folder>
+  <Folder Name="/third_party/">
+    <Project Path="third_party/xvdtool/LibXboxOne/LibXboxOne.csproj" />
+  </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Orion.Tests/Orion.Tests.csproj" />
   </Folder>

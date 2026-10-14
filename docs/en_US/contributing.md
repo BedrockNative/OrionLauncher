@@ -55,3 +55,14 @@ python3 -m unittest discover -s .github/tests -v
 actionlint
 git diff --check
 ```
+
+### Game package dependency
+
+Initialize the pinned XvdTool source before building:
+
+```bash
+git submodule update --init --recursive
+```
+
+The launcher references `third_party/xvdtool/LibXboxOne` directly; it does not invoke
+an external XvdTool executable. Xodus still supplies authenticated content licenses.

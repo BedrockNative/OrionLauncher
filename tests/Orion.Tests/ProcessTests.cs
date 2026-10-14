@@ -25,6 +25,18 @@ public sealed class ProcessTests
     }
 
     [Fact]
+    public async Task GameExitDoesNotWaitForInheritedPipes()
+    {
+        using var directory = new TestDirectory();
+        var log = Path.Combine(directory.Root, "process.log");
+        var timer = System.Diagnostics.Stopwatch.StartNew();
+        await new ProcessRunner().RunAsync(new("/bin/sh", ["-c", "sleep 2 & printf 'game exited\\n'"], directory.Root),
+            log, default, drainAfterExit: TimeSpan.FromMilliseconds(100));
+        Assert.True(timer.Elapsed < TimeSpan.FromSeconds(1.5), timer.Elapsed.ToString());
+        Assert.Contains("game exited", File.ReadAllText(log));
+    }
+
+    [Fact]
     public async Task CancellingTerminatesTheProcessTree()
     {
         using var directory = new TestDirectory();

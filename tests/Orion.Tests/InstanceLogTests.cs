@@ -40,7 +40,7 @@ public sealed class InstanceLogTests
             ["-c", "printf '%s\\n' \"$1\"; printf '%s\\n' \"$2\" >&2", "test", $"output-{i}", $"error-{i}"], directory.Root), log, CancellationToken.None)));
         var content = await File.ReadAllTextAsync(log);
         for (var i = 0; i < 6; i++) { Assert.Contains($"output-{i}", content); Assert.Contains($"error-{i}", content); }
-        Assert.Equal(6, content.Split("Exited with code 0").Length - 1);
+        Assert.DoesNotContain("Exited with code 0", content);
     }
 
     [Fact]

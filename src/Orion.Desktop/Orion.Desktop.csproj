@@ -23,10 +23,10 @@
     <EmbeddedResource Include="../../docs/en_US/changelog/legacy/**/*.md">
       <LogicalName>Changelog.legacy/%(RecursiveDir)%(Filename)%(Extension)</LogicalName>
     </EmbeddedResource>
+    <None Include="../../third_party/xvdtool/LICENSE" Link="Licenses/XvdTool-LICENSE" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <None Include="Assets/orion.svg" CopyToOutputDirectory="PreserveNewest" />
     <AvaloniaResource Include="Assets/orion.png" />
     <AvaloniaResource Include="Assets/Maintainers/*.png" />
     <SupportedPlatform Include="linux" />
   </ItemGroup>
-  <Import Project="../Orion.Native/Orion.Native.targets" />
 </Project>

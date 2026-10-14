@@ -135,6 +135,80 @@ public sealed class XodusSessionsTests
     }
 
     [Fact]
+    public async Task ResetOneAccountPreservesOtherServicesAndTheirSockets()
+    {
+        using var dir = new TestDirectory();
+        var runtime = await Runtime(dir);
+        await using var sessions = new XodusSessions(dir.Paths, new());
+        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(15));
+        var first = new string('a', 64); var second = new string('b', 64);
+        var a = await sessions.GetAsync(runtime, first, timeout.Token);
+        var b = await sessions.GetAsync(runtime, second, timeout.Token);
+        var pids = Starts(dir);
+        using var cancelled = new CancellationTokenSource();
+        cancelled.Cancel();
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => sessions.ResetAccountAsync(first, cancelled.Token));
+        Assert.Same(a, await sessions.GetAsync(runtime, first, timeout.Token));
+        await sessions.ResetAccountAsync(first, timeout.Token);
+        Assert.False(Alive(pids[0]));
+        Assert.True(Alive(pids[1]));
+        Assert.Same(b, await sessions.GetAsync(runtime, second, timeout.Token));
+        var replacement = await sessions.GetAsync(runtime, first, timeout.Token);
+        Assert.NotSame(a, replacement);
+        Assert.Equal(a.Environment.SocketPath, replacement.Environment.SocketPath);
+        Assert.Equal(3, Starts(dir).Length);
+    }
+
+    [Fact]
+    public async Task RemovingAnAccountCancelsOnlyItsPendingStartup()
+    {
+        using var dir = new TestDirectory();
+        var runtime = await Runtime(dir);
+        var script = Path.Combine(runtime.Directory, "xodus-service");
+        await File.WriteAllTextAsync(script, (await File.ReadAllTextAsync(script)).Replace("server = socket.socket",
+            "if os.environ.get('XODUS_ACCOUNT_ID', '').startswith('b'):\n    import time\n    time.sleep(60)\nserver = socket.socket"));
+        await using var sessions = new XodusSessions(dir.Paths, new());
+        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(15));
+        var first = new string('a', 64); var second = new string('b', 64);
+        var ready = await sessions.GetAsync(runtime, first, timeout.Token);
+        var pending = sessions.GetAsync(runtime, second, timeout.Token);
+        for (var i = 0; i < 100 && Starts(dir).Length < 2; i++) await Task.Delay(50, timeout.Token);
+        Assert.Equal(2, Starts(dir).Length);
+        await sessions.ResetAccountAsync(second, timeout.Token).WaitAsync(TimeSpan.FromSeconds(3));
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => pending);
+        Assert.Same(ready, await sessions.GetAsync(runtime, first, timeout.Token));
+        Assert.True(Alive(Starts(dir)[0]));
+    }
+
+    [Fact]
+    public async Task LoginAndSelectPreservePinnedAccountsAndRemovalOnlyStopsItsAccount()
+    {
+        using var dir = new TestDirectory();
+        var runtime = await Runtime(dir);
+        using var http = new HttpClient(new ReleaseTests.Handler(_ => throw new InvalidOperationException("No network")));
+        var runtimes = new RuntimeManager(dir.Paths, new NoReleases(), new(http), Path.Combine(dir.Root, "bundle"));
+        var runner = new ProcessRunner();
+        await using var sessions = new XodusSessions(dir.Paths, runner);
+        await using var management = new XodusService(dir.Paths, new(dir.Paths), runner);
+        var accounts = new AccountService(dir.Paths, runtimes, runner, new(dir.Paths), management, sessions);
+        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(15));
+        var first = new string('a', 64); var second = new string('b', 64);
+        var a = await sessions.GetAsync(runtime, first, timeout.Token);
+        var b = await sessions.GetAsync(runtime, second, timeout.Token);
+        var pids = Starts(dir);
+        await accounts.LoginAsync(null, timeout.Token);
+        await accounts.ChangeAsync("select", second, null, timeout.Token);
+        Assert.Same(a, await sessions.GetAsync(runtime, first, timeout.Token));
+        Assert.Same(b, await sessions.GetAsync(runtime, second, timeout.Token));
+        Assert.Equal(pids, Starts(dir));
+        Assert.All(pids, pid => Assert.True(Alive(pid)));
+        await accounts.ChangeAsync("remove", first, null, timeout.Token);
+        Assert.False(Alive(pids[0]));
+        Assert.True(Alive(pids[1]));
+        Assert.Same(b, await sessions.GetAsync(runtime, second, timeout.Token));
+    }
+
+    [Fact]
     public async Task GameLaunchReusesStartupServiceAndRunsNoPreparatoryWineCommand()
     {
         using var dir = new TestDirectory();
@@ -158,6 +232,7 @@ public sealed class XodusSessionsTests
         await new InstanceRepository(dir.Paths).SaveAsync(instance);
         var game = dir.Paths.Game(instance.Id); Directory.CreateDirectory(game);
         await File.WriteAllTextAsync(Path.Combine(game, "Minecraft.Windows.exe"), "fixture");
+        await File.WriteAllTextAsync(Path.Combine(game, "AppxManifest.xml"), GameConfigurationTests.Manifest);
         await File.WriteAllTextAsync(Path.Combine(game, ".xodus-streaming.msixvc"), "fixture");
         using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(15));
         await sessions.WarmAsync(runtime, [null], timeout.Token);
@@ -166,15 +241,11 @@ public sealed class XodusSessionsTests
         await launcher.RunAsync(instance, null, timeout.Token);
         Assert.Equal(pid, Assert.Single(Starts(dir)));
         Assert.True(Alive(pid));
-        Assert.Equal(new[] { "game", "server -w", "game", "server -w" },
+        Assert.Equal(new[] { "game", "server -k", "server -w", "game", "server -k", "server -w" },
             File.ReadAllLines(Path.Combine(dir.Paths.XodusProfile, "commands")));
         var log = await File.ReadAllTextAsync(dir.Paths.InstanceLog(instance.Id));
-        Assert.Contains("[Launch timing] Xodus service ready:", log);
-        Assert.Contains("[Launch timing] RTX validation and preferences:", log);
-        Assert.Contains("[RTX timing] Recovery and game scan:", log);
-        Assert.Contains("[RTX timing] Shader integrity and compatibility:", log);
-        Assert.Contains("[RTX timing] RTX families and content:", log);
-        Assert.Contains("[Launch timing] Game diagnostics:", log);
+        Assert.DoesNotContain("[Launch timing]", log);
+        Assert.DoesNotContain("[RTX timing]", log);
         Assert.False(launcher.IsRunning(instance.Id));
     }
 

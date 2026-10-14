@@ -1,4 +1,6 @@
 {
+  "OrionOptimizations": "Habilitar optimizações do Orion",
+  "OrionOptimizationsHint": "Baixa o Orion.Optimization ao iniciar. As otimizações são ativadas somente em versões compatíveis.",
   "FileManager": "Explorador de arquivos",
   "FileManagerSystem": "Padrão do sistema",
   "FileManagerNotInstalled": "Não instalado",
@@ -292,7 +294,7 @@
   "NoAccounts": "Nenhuma conta conectada", "ActiveAccount": "Conta ativa", "SavedAccount": "Conta salva",
   "AddAccount": "Adicionar conta Microsoft", "UseAccount": "Usar esta conta", "RemoveAccount": "Remover conta", "RefreshAccounts": "Atualizar contas",
   "RemoveAccountHint": "Remover esta conta apenas do Orion? Os jogos instalados serão mantidos. Se esta for a conta ativa, a próxima conta salva será ativada.",
-  "AccountsHint": "Contas e credenciais ficam no perfil privado do Xodus do Orion. A conta ativa é usada nos serviços Xbox; qualquer conta salva que comprou Minecraft para PC pode autorizar uma instalação. O sistema poderá pedir o desbloqueio do chaveiro.",
+  "AccountsHint": "Contas e credenciais ficam no perfil privado do Xodus do Orion. A conta ativa é usada nos serviços Xbox; qualquer conta salva que comprou Minecraft para PC pode autorizar uma instalação. O sistema poderá pedir o desbloqueio do chaveiro. Adicione ou troque contas sem interromper jogos abertos. Escolha uma conta fixa nas opções de inicialização de cada instância; instâncias com a mesma conta reutilizam o serviço Xodus, e contas diferentes ficam isoladas.",
   "ArgumentsTab": "Argumentos", "EnvironmentTab": "Ambiente", "ResolutionTab": "Resolução",
   "LaunchOptions": "Opções de inicialização", "GameArguments": "Argumentos / flags do jogo",
   "GameArgumentsHint": "Um argumento por linha, sem aspas ao redor. Valores com espaços ficam na mesma linha. São argumentos do jogo, não comandos de terminal.",

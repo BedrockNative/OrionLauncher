@@ -60,6 +60,8 @@
             <TextBlock Text="{Binding Text[GameArguments]}" FontWeight="SemiBold" />
             <TextBlock Text="{Binding Text[GameArgumentsHint]}" Classes="muted" FontSize="12" TextWrapping="Wrap" />
             <TextBox Text="{Binding ArgumentLines}" AcceptsReturn="True" Height="100" TextWrapping="Wrap" Watermark="--example-flag" />
+            <CheckBox Content="{Binding Text[OrionOptimizations]}" IsChecked="{Binding OrionOptimizations}" />
+            <TextBlock Text="{Binding Text[OrionOptimizationsHint]}" Classes="muted" TextWrapping="Wrap" />
             <CheckBox Content="{Binding Text[ShowLogOnLaunch]}" IsChecked="{Binding ShowLogOnLaunch}" />
           </StackPanel>
         </ScrollViewer>

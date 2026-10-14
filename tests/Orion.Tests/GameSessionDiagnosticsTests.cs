@@ -87,7 +87,7 @@ public sealed class GameSessionDiagnosticsTests
         await new ProcessRunner().RunAsync(new("/bin/sh", ["-c", "printf 'wine: Unhandled page'; sleep .05; printf ' fault on read access to 0000000000000000\\n' >&1"], dir.Root),
             log, default, diagnostics.ObserveOutput);
         Assert.True(diagnostics.HasUnhandledException);
-        Assert.Contains("[sh] Exited with code 0", File.ReadAllText(log));
+        Assert.DoesNotContain("Exited with code 0", File.ReadAllText(log));
     }
 
     [Fact]

@@ -7,6 +7,11 @@ public sealed record ProcessCommand(string Executable, IReadOnlyList<string> Arg
 
 public sealed class ProcessRunner(IReadOnlyList<string>? supervisorHost = null)
 {
+    private static DesktopSessionEnvironment? desktopSession;
+
+    public static void CaptureDesktopSession() =>
+        desktopSession = new(Environment.GetEnvironmentVariable("WAYLAND_DISPLAY"));
+
     public ProcessStartInfo OwnedStartInfo(ProcessCommand command) => StartInfo(
         supervisorHost is { Count: > 0 } ? ProcessSupervisor.Wrap(command, supervisorHost) : command);
     /// <summary>Structured command output stays in memory, not in diagnostic logs.</summary>
@@ -54,6 +59,7 @@ public sealed class ProcessRunner(IReadOnlyList<string>? supervisorHost = null)
             RedirectStandardError = true,
             CreateNoWindow = true
         };
+        desktopSession?.Restore(info.Environment);
         foreach (var argument in command.Arguments) info.ArgumentList.Add(argument);
         if (command.Environment is not null)
             foreach (var (key, value) in command.Environment)
@@ -63,13 +69,13 @@ public sealed class ProcessRunner(IReadOnlyList<string>? supervisorHost = null)
         return info;
     }
 
-    public async Task RunAsync(ProcessCommand command, string logFile, CancellationToken ct, Action<string>? outputReceived = null)
+    public async Task RunAsync(ProcessCommand command, string logFile, CancellationToken ct, Action<string>? outputReceived = null, TimeSpan? drainAfterExit = null)
     {
         ct.ThrowIfCancellationRequested();
         Directory.CreateDirectory(Path.GetDirectoryName(logFile)!);
-        ProcessLog.Event(logFile, Path.GetFileName(command.Executable), "Starting");
+        if (Environment.GetEnvironmentVariable("ORION_DIAGNOSTICS") == "1") ProcessLog.Event(logFile, Path.GetFileName(command.Executable), "Starting");
         using var process = Process.Start(OwnedStartInfo(command)) ?? throw new IOException($"Could not start {command.Executable}.");
-        try { await ObserveAsync(process, logFile, ct, outputReceived, Path.GetFileName(command.Executable)); }
+        try { await ObserveAsync(process, logFile, ct, outputReceived, Path.GetFileName(command.Executable), drainAfterExit); }
         catch
         {
             if (!process.HasExited) { process.Kill(entireProcessTree: true); await process.WaitForExitAsync(CancellationToken.None); }
@@ -77,24 +83,25 @@ public sealed class ProcessRunner(IReadOnlyList<string>? supervisorHost = null)
         }
     }
 
-    public static async Task ObserveAsync(Process process, string logFile, CancellationToken ct, Action<string>? outputReceived = null, string? source = null)
+    public static async Task ObserveAsync(Process process, string logFile, CancellationToken ct, Action<string>? outputReceived = null, string? source = null, TimeSpan? drainAfterExit = null)
     {
+        using var drainCancellation = new CancellationTokenSource();
         Directory.CreateDirectory(Path.GetDirectoryName(logFile)!);
         // Drain both streams concurrently to prevent child-process pipe deadlocks.
         async Task Drain(StreamReader reader)
         {
+            var line = new System.Text.StringBuilder();
+            void Flush()
+            {
+                var text = line.ToString(); line.Clear();
+                ProcessLog.Append(logFile, text);
+                outputReceived?.Invoke(text);
+            }
             try
             {
                 var buffer = new char[4096];
-                var line = new System.Text.StringBuilder();
-                void Flush()
-                {
-                    var text = line.ToString(); line.Clear();
-                    ProcessLog.Append(logFile, text);
-                    outputReceived?.Invoke(text);
-                }
                 int length;
-                while ((length = await reader.ReadAsync(buffer.AsMemory(), CancellationToken.None)) > 0)
+                while ((length = await reader.ReadAsync(buffer.AsMemory(), drainCancellation.Token)) > 0)
                 {
                     // Keep stdout/stderr from splicing each other's lines. Bound
                     // unterminated output so a child cannot grow memory indefinitely.
@@ -104,13 +111,14 @@ public sealed class ProcessRunner(IReadOnlyList<string>? supervisorHost = null)
                         if (buffer[i] == '\n' || line.Length >= 8192) Flush();
                     }
                 }
-                if (line.Length > 0) Flush();
             }
+            catch (OperationCanceledException) when (drainCancellation.IsCancellationRequested) { }
             catch
             {
                 if (!process.HasExited) process.Kill(entireProcessTree: true);
                 throw;
             }
+            finally { if (line.Length > 0) Flush(); }
         }
         var output = Task.WhenAll(Drain(process.StandardOutput), Drain(process.StandardError));
         using var registration = ct.Register(() =>
@@ -119,8 +127,9 @@ public sealed class ProcessRunner(IReadOnlyList<string>? supervisorHost = null)
             catch (InvalidOperationException) { }
         });
         await process.WaitForExitAsync(CancellationToken.None);
+        if (drainAfterExit is { } delay) drainCancellation.CancelAfter(delay);
         await output;
-        ProcessLog.Event(logFile, source ?? Path.GetFileName(process.StartInfo.FileName), $"Exited with code {process.ExitCode}");
+        if (process.ExitCode != 0 || Environment.GetEnvironmentVariable("ORION_DIAGNOSTICS") == "1") ProcessLog.Event(logFile, source ?? Path.GetFileName(process.StartInfo.FileName), $"Exited with code {process.ExitCode}");
         ct.ThrowIfCancellationRequested();
         if (process.ExitCode != 0)
             throw new ProcessFailureException(process.StartInfo.FileName, process.ExitCode, logFile);
