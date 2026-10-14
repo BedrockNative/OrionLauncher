@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.0.3 — in development
+## 1.0.3
 
 Full XvdTool extraction, rolling Latest Release/Preview versions, optional Orion
 optimizations, direct Wine launch, quieter logs and desktop-session fixes:
