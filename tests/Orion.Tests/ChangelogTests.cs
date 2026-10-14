@@ -16,7 +16,7 @@ public sealed class ChangelogTests
         var current = typeof(ChangelogCatalog).Assembly.GetName().Version!;
         var releases = entries.Where(entry => !entry.IsLegacy).ToArray();
         var historical = entries.Where(entry => entry.IsLegacy).ToArray();
-        Assert.Equal(new[] { "1.0.2", "1.0.1", "1.0.0" }.Where(version => Version.Parse(version) <= current),
+        Assert.Equal(new[] { "1.0.3", "1.0.2", "1.0.1", "1.0.0" }.Where(version => Version.Parse(version) <= current),
             releases.Select(entry => entry.Title.Split(' ')[0]));
         Assert.Equal(6, historical.Length);
         Assert.False(entries[0].IsLegacy);
