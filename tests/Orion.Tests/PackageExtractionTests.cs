@@ -1,6 +1,7 @@
 using DiscUtils;
 using Orion.Domain;
 using Orion.Infrastructure.Games;
+using Orion.Infrastructure.Linux;
 
 namespace Orion.Tests;
 
@@ -64,6 +65,55 @@ public sealed class PackageExtractionTests
         Assert.Contains("3 / 3", reports[^1].Message);
         Assert.All(reports, p => Assert.InRange(p.Fraction!.Value, 0, 1));
     }
+
+    [Fact]
+    public void ExtractsHiddenAndSystemFilesFromNtfsPackages()
+    {
+        // DiscUtils cannot format NTFS on Linux; ntfs-3g's offline tools build the volume.
+        if (DesktopFolderLauncher.FindExecutable("mkntfs") is not { } mkntfs || DesktopFolderLauncher.FindExecutable("ntfscp") is not { } ntfscp) return;
+        using var d = new TestDirectory();
+        var image = Path.Combine(d.Root, "volume.img"); var exe = Path.Combine(d.Root, "game.bin"); var config = Path.Combine(d.Root, "game.xml");
+        using (var create = File.Create(image)) create.SetLength(2 * 1024 * 1024);
+        File.WriteAllBytes(exe, OrionOptimizationTests.Image()); File.WriteAllText(config, "<Game />");
+        void Run(string file, params string[] args)
+        {
+            using var process = System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(file, args) { RedirectStandardOutput = true, RedirectStandardError = true })!;
+            process.StandardOutput.ReadToEnd(); process.StandardError.ReadToEnd(); process.WaitForExit();
+            Assert.Equal(0, process.ExitCode);
+        }
+        Run(mkntfs, "-F", "-Q", "-q", "-s", "512", "-c", "4096", image);
+        Run(ntfscp, "-q", image, exe, "Minecraft.Windows.exe");
+        Run(ntfscp, "-q", image, config, "MicrosoftGame.config");
+#pragma warning disable CA1416
+        using (var stream = File.Open(image, FileMode.Open, FileAccess.ReadWrite))
+        using (var ntfs = new DiscUtils.Ntfs.NtfsFileSystem(stream))
+        {
+            ntfs.SetAttributes("Minecraft.Windows.exe", FileAttributes.Hidden | FileAttributes.System | FileAttributes.Archive);
+            ntfs.SetAttributes("MicrosoftGame.config", FileAttributes.Hidden | FileAttributes.Archive);
+        }
+#pragma warning restore CA1416
+        using var volume = File.OpenRead(image);
+        using var fs = XvdPackageExtractor.OpenFilesystem(volume);
+        var output = Path.Combine(d.Root, "output");
+        XvdPackageExtractor.ExtractFilesystem(fs, output, null, default);
+        Assert.Equal(OrionOptimizationTests.Image(), File.ReadAllBytes(Path.Combine(output, "Minecraft.Windows.exe")));
+        Assert.Equal("<Game />", File.ReadAllText(Path.Combine(output, "MicrosoftGame.config")));
+        Assert.Equal(new[] { "MicrosoftGame.config", "Minecraft.Windows.exe" }, Directory.EnumerateFileSystemEntries(output).Select(p => Path.GetFileName(p)).Order(StringComparer.Ordinal).ToArray());
+        Assert.Equal(Path.Combine(output, "Minecraft.Windows.exe"), GameLayout.Executable(output));
+    }
+
+    [Theory]
+    [InlineData(0L, true)]
+    [InlineData(5L, true)]
+    [InlineData(11L, true)]
+    [InlineData(15L, true)]
+    [InlineData(16L, false)]
+    [InlineData(19L, false)] // Minecraft 1.26.62 stores Minecraft.Windows.exe here.
+    [InlineData(23L, false)]
+    [InlineData((3L << 48) | 5, true)]
+    [InlineData((7L << 48) | 19, false)]
+    public void TreatsOnlyReservedNtfsRecordsAsMetafiles(long fileId, bool metafile) =>
+        Assert.Equal(metafile, XvdPackageExtractor.IsNtfsMetafile(fileId));
 
     [Fact]
     public void CancellationStopsBeforeCreatingFiles()

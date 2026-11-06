@@ -112,11 +112,7 @@ public sealed class XvdPackageExtractor(AppPaths paths, ProcessRunner runner, Co
             if (table.Count == 0) { disk.Position = 0; table = new BiosPartitionTable(disk, geometry); }
             if (table.Count == 0) throw new InvalidDataException("No package filesystem found.");
             using var partition = table.Partitions[0].Open();
-            // DiscUtils marks its NTFS API Windows-only because write/security APIs
-            // use Windows identities; this read-only stream path is used by XvdTool on Linux.
-#pragma warning disable CA1416
-            using var fs = new NtfsFileSystem(partition);
-#pragma warning restore CA1416
+            using var fs = OpenFilesystem(partition);
             ExtractFilesystem(fs, destination, progress, ct);
             File.WriteAllText(Path.Combine(destination, Marker), "1\n");
             GameLayout.Validate(destination);
@@ -128,6 +124,27 @@ public sealed class XvdPackageExtractor(AppPaths paths, ProcessRunner runner, Co
             if (File.Exists(working)) File.Delete(working);
         }
     }
+
+    // DiscUtils hides every MFT record below 24 as a metafile, but only 0-15 are
+    // reserved by NTFS. Minecraft 1.26.62 stores Minecraft.Windows.exe and
+    // MicrosoftGame.Config in records 19-23, so ExtractFilesystem skips metafiles itself.
+    // DiscUtils marks its NTFS API Windows-only because write/security APIs
+    // use Windows identities; this read-only stream path is used by XvdTool on Linux.
+#pragma warning disable CA1416
+    public static NtfsFileSystem OpenFilesystem(Stream partition)
+    {
+        var fs = new NtfsFileSystem(partition);
+        fs.NtfsOptions.HideHiddenFiles = false;
+        fs.NtfsOptions.HideSystemFiles = false;
+        fs.NtfsOptions.HideMetafiles = false;
+        return fs;
+    }
+
+    public static bool IsNtfsMetafile(long fileId) => (fileId & 0xFFFF_FFFF_FFFF) < 16;
+
+    private static bool IsMetafile(DiscFileSystem fs, DiscFileSystemInfo entry) =>
+        fs is NtfsFileSystem ntfs && !ntfs.NtfsOptions.HideMetafiles && IsNtfsMetafile(ntfs.GetFileId(entry.FullName));
+#pragma warning restore CA1416
 
     public static void ExtractFilesystem(DiscFileSystem fs, string destination, IProgress<OperationProgress>? progress, CancellationToken ct)
     {
@@ -150,11 +167,13 @@ public sealed class XvdPackageExtractor(AppPaths paths, ProcessRunner runner, Co
             // DiscDirectoryInfo/DiscFileInfo instances. Use the typed enumeration APIs.
             foreach (var dir in source.GetDirectories())
             {
+                if (depth == 0 && IsMetafile(fs, dir)) continue;
                 Validate(dir); var path = Path.Combine(target, dir.Name);
                 directories.Add(path); Scan(dir, path, depth + 1);
             }
             foreach (var file in source.GetFiles())
             {
+                if (depth == 0 && IsMetafile(fs, file)) continue;
                 Validate(file); totalBytes = checked(totalBytes + file.Length);
                 files.Add((file, Path.Combine(target, file.Name)));
             }
