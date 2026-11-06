@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.4 (in development)
+
+Minecraft 1.26.62 installation fix, version upgrades in instance settings and compact progress logs:
+[English](docs/en_US/changelog/release/v1.0.4.md) ·
+[Português (Brasil)](docs/pt_BR/changelog/release/v1.0.4.md).
+
 ## 1.0.3
 
 Full XvdTool extraction, rolling Latest Release/Preview versions, optional Orion
