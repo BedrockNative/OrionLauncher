@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.0.4 (in development)
+## 1.0.4
 
 Minecraft 1.26.62 installation fix, version upgrades in instance settings and compact progress logs:
 [English](docs/en_US/changelog/release/v1.0.4.md) ·
