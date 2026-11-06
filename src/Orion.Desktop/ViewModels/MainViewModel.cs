@@ -360,7 +360,19 @@ public partial class MainViewModel : ObservableObject
         if (IsBusy) { Error = Text["Busy"]; return; }
         Error = null;
         try { LaunchEditor = new(card.Instance, Text, SavedAccounts, Covers, ProfileFor, card); }
-        catch (Exception ex) { SetError(ex); }
+        catch (Exception ex) { SetError(ex); return; }
+        _ = LoadVersionChoicesAsync(LaunchEditor);
+    }
+
+    private async Task LoadVersionChoicesAsync(LaunchOptionsViewModel editor)
+    {
+        try
+        {
+            var catalog = await services.Catalog.GetAsync();
+            if (LaunchEditor == editor) editor.SetVersions(catalog);
+        }
+        // The version picker stays hidden; the remaining settings are still editable.
+        catch (Exception ex) when (ex is HttpRequestException or IOException or InvalidDataException or System.Text.Json.JsonException or TaskCanceledException) { }
     }
 
     [RelayCommand] private void CloseLaunchOptions() { if (!IsBusy) LaunchEditor = null; }
@@ -372,7 +384,7 @@ public partial class MainViewModel : ObservableObject
     [RelayCommand] private Task SaveLaunchOptionsAsync() => WorkAsync(async ct =>
     {
         if (LaunchEditor is not { } editor) return;
-        await services.Instances.SetConfigurationAsync(editor.InstanceId, editor.Name, editor.Build(), editor.SelectedCover.Id, editor.DesktopShortcut, ct);
+        await services.Instances.SetConfigurationAsync(editor.InstanceId, editor.Name, editor.Build(), editor.SelectedCover.Id, editor.DesktopShortcut, ct, editor.VersionSelection);
         LaunchEditor = null;
         await ReloadAsync();
     });

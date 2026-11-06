@@ -86,6 +86,47 @@ public sealed class RollingGameUpdateTests
         Same(original, await new RollingGameUpdate(d.Paths, catalog, installer).PrepareAsync(original, null, default));
         Assert.Equal(0, catalog.Calls); Assert.Equal(0, installer.Calls);
     }
+    [Fact] public async Task FixedVersionUpgradesToItsTargetOnceWithinItsChannel()
+    {
+        using var d = new TestDirectory(); var original = (await Seed(d, false)).WithVersionSelection("1.2", false);
+        await new InstanceRepository(d.Paths).SaveAsync(original);
+        var catalog = new Catalog(V("1.5", "Release"), V("1.2", "Release"), V("1.2", "Preview"), V("9.0", "Preview")); var installer = new Installer(d.Paths);
+        var updater = new RollingGameUpdate(d.Paths, catalog, installer);
+        var updated = await updater.PrepareAsync(original, null, default);
+        Same(original with { Version = "1.2", TargetVersion = null }, updated);
+        Assert.Equal("1.2", File.ReadAllText(Path.Combine(d.Paths.Game(original.Id), "Minecraft.Windows.exe")));
+        Assert.Equal("keep", File.ReadAllText(Path.Combine(d.Paths.Prefix(original.Id), "world")));
+        Same(updated, await updater.PrepareAsync(updated, null, default));
+        Assert.Equal(1, catalog.Calls); Assert.Equal(1, installer.Calls);
+    }
+    [Fact] public async Task TargetMissingFromItsChannelKeepsInstalledGame()
+    {
+        using var d = new TestDirectory(); var original = (await Seed(d, false)).WithVersionSelection("2.0", false);
+        var installer = new Installer(d.Paths);
+        Same(original, await new RollingGameUpdate(d.Paths, new Catalog(V("2.0", "Preview")), installer).PrepareAsync(original, null, default));
+        Assert.Equal(0, installer.Calls);
+    }
+    [Fact] public async Task LatestPreviewIgnoresReleaseVersions()
+    {
+        using var d = new TestDirectory(); var seeded = await Seed(d);
+        var original = seeded with { Channel = "Preview" };
+        var installer = new Installer(d.Paths);
+        Same(original, await new RollingGameUpdate(d.Paths, new Catalog(V("5.0", "Release")), installer).PrepareAsync(original, null, default));
+        Assert.Equal(0, installer.Calls);
+    }
+    [Fact] public void VersionSelectionNeverDowngradesOrMixesChannels()
+    {
+        var instance = GameInstance.Create("World", "1.5", "Release");
+        Assert.Throws<ArgumentException>(() => instance.WithVersionSelection("1.4", false));
+        Assert.Null(instance.WithVersionSelection("1.5", false).TargetVersion);
+        Assert.Equal("1.6", instance.WithVersionSelection("1.6", false).TargetVersion);
+        var latest = instance.WithVersionSelection("1.6", false).WithVersionSelection("1.6", true);
+        Assert.True(latest.TrackUpdates); Assert.Null(latest.TargetVersion);
+        var stopped = latest.WithVersionSelection("1.5", false);
+        Assert.False(stopped.TrackUpdates); Assert.Null(stopped.TargetVersion);
+        var upgrades = GameVersion.UpgradesFor(instance, [V("1.4", "Release"), V("1.5", "Release"), V("1.10", "Release"), V("1.6", "Release"), V("2.0", "Preview")]);
+        Assert.Equal(new[] { "1.10", "1.6" }, upgrades.Select(v => v.Version).ToArray());
+    }
     [Fact] public async Task FailedPreparationLeavesInstalledGameUntouched()
     {
         using var d = new TestDirectory(); var original = await Seed(d);
