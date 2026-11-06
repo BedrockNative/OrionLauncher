@@ -1,3 +1,4 @@
+using Orion.Infrastructure.Games;
 using Orion.Infrastructure.Processes;
 using Orion.Infrastructure.Runtime;
 using Orion.Desktop.ViewModels;
@@ -84,5 +85,36 @@ public sealed class InstanceLogTests
         Assert.True(editor.Build().ShowLogOnLaunch);
         editor.ResetCommand.Execute(null);
         Assert.False(editor.Build().ShowLogOnLaunch);
+    }
+
+    [Fact]
+    public void MeasuredProgressRewritesOneLineWithElapsedTime()
+    {
+        using var dir = new TestDirectory();
+        var id = Guid.NewGuid(); var log = dir.Paths.InstanceLog(id);
+        using (var journal = new InstanceJournal(dir.Paths, id, null, null))
+        using (var nested = new InstanceJournal(dir.Paths, id, null, journal))
+        {
+            nested.Report(new("Verifying a Minecraft purchase"));
+            for (var i = 0; i <= 4; i++) nested.Report(new($"Downloading package · {i}.0 / 4.0 MiB", i / 4d));
+            nested.Report(new("Package downloaded"));
+            nested.Report(new("Decrypting blocks · 1 / 2 · 50.0%", 0.5));
+            nested.Report(new("Decrypting blocks · 2 / 2 · 100.0%", 1));
+            ProcessLog.Event(log, "Xodus service", "interleaved");
+            nested.Report(new("Decrypting blocks · 2 / 2 · 100.0%", 1));
+            nested.Error(new InvalidDataException("broken"));
+            journal.Error(new InvalidDataException("broken"));
+        }
+        var lines = File.ReadAllLines(log).Where(l => l.Length > 0).Select(l => l[11..]).ToArray();
+        Assert.Equal(7, lines.Length);
+        Assert.Equal("[Orion] Verifying a Minecraft purchase", lines[0]);
+        Assert.Matches(@"^\[Orion\] Downloading package · 4\.0 / 4\.0 MiB · 0:0\d$", lines[1]);
+        Assert.Equal("[Orion] Package downloaded", lines[2]);
+        Assert.StartsWith("[Orion] Decrypting blocks · 2 / 2 · 100.0% · 0:0", lines[3]);
+        Assert.Equal("[Xodus service] interleaved", lines[4]);
+        Assert.StartsWith("[Orion] Decrypting blocks · 2 / 2", lines[5]);
+        Assert.Equal("[Orion] broken", lines[6]);
+        Assert.Equal("1:02:03", InstanceJournal.FormatElapsed(new TimeSpan(1, 2, 3)));
+        Assert.Equal("4:05", InstanceJournal.FormatElapsed(new TimeSpan(0, 4, 5)));
     }
 }
