@@ -276,6 +276,7 @@
   "LegacyChangelog": "Versão histórica", "FullLegacyChangelog": "Changelog histórico completo (inglês)",
   "ChangelogHint": "Notas incluídas nesta versão, disponíveis offline. As notas da versão atual estão em inglês.",
   "LegacyChangelogWarning": "Notas históricas de versões. Esses recursos não estão necessariamente disponíveis na versão atual.",
+  "InstanceVersion": "Versão do Minecraft", "InstanceVersionHint": "A atualização é instalada na próxima vez que você clicar em Jogar. Só são oferecidas versões mais novas do mesmo canal (Release ou Preview); mundos, prefixos e configurações são mantidos.", "LatestRelease": "Latest Release", "LatestPreview": "Latest Preview", "InstalledVersion": "instalada",
   "InstanceAccount": "Conta do jogo", "UseCurrentAccount": "Usar a conta atual do launcher",
   "MissingInstanceAccount": "Conta removida — escolha outra", "InstanceAccountHint": "Usada ao iniciar o jogo. Não altera a conta atual do launcher.",
   "CopyLog": "Copiar logs", "CopyLogHint": "Copiar a saída recente exibida aqui", "LogCopied": "Logs copiados", "LogCopyError": "Não foi possível copiar os logs.",

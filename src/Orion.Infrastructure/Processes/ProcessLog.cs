@@ -47,4 +47,22 @@ public static class ProcessLog
 
     public static void Event(string path, string source, string text) =>
         Append(path, $"\n[{DateTimeOffset.Now:HH:mm:ss}] [{source}] {text}\n");
+
+    private static readonly ConcurrentDictionary<string, (string Key, long Start, long End)> LastProgress = new(StringComparer.Ordinal);
+
+    /// <summary>Rewrites the previous event in place while it is still the journal's last write for <paramref name="key"/>.</summary>
+    public static void Progress(string path, string source, string key, string text)
+    {
+        var full = Path.GetFullPath(path);
+        lock (Gates.GetOrAdd(full, _ => new()))
+        {
+            Directory.CreateDirectory(Path.GetDirectoryName(full)!);
+            using var stream = new FileStream(full, FileMode.OpenOrCreate, FileAccess.Write, FileShare.ReadWrite);
+            var start = LastProgress.TryGetValue(full, out var last) && last.Key == key && last.End == stream.Length ? last.Start : stream.Length;
+            stream.SetLength(start);
+            stream.Position = start;
+            stream.Write(new UTF8Encoding(false).GetBytes($"\n[{DateTimeOffset.Now:HH:mm:ss}] [{source}] {text}\n"));
+            LastProgress[full] = (key, start, stream.Length);
+        }
+    }
 }

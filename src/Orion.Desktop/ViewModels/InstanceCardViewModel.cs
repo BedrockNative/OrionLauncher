@@ -9,7 +9,8 @@ public partial class InstanceCardViewModel : ObservableObject
     public GameInstance Instance { get; }
     public MainViewModel Owner { get; }
     public string Name => Instance.Name;
-    public string Version => Instance.TrackUpdates ? $"{(Instance.Channel == "Release" ? "Latest Release" : "Latest Preview")} · {Instance.Version}" : Instance.Version;
+    public string Version => Instance.TrackUpdates ? $"{(Instance.Channel == "Release" ? "Latest Release" : "Latest Preview")} · {Instance.Version}"
+        : Instance.TargetVersion is { } target ? $"{Instance.Version} → {target}" : Instance.Version;
     public string Channel => Instance.Channel.ToUpperInvariant();
     public string Monogram => Name[..1].ToUpperInvariant();
     [ObservableProperty] private bool running;

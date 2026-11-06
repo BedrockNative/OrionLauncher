@@ -25,6 +25,10 @@ public sealed record MonitorResolutionChoice(string Label, GameResolution? Resol
 {
     public override string ToString() => Label;
 }
+public sealed record VersionChoice(string Version, bool TrackUpdates, string Label)
+{
+    public override string ToString() => Label;
+}
 public sealed record MangoHudPositionChoice(MangoHudPosition Position, string Label)
 {
     public override string ToString() => Label;
@@ -39,6 +43,26 @@ public partial class LaunchOptionsViewModel : ObservableObject
     [ObservableProperty] private string name;
     [ObservableProperty] private bool desktopShortcut;
     public InstanceCardViewModel? Card { get; }
+    private readonly GameInstance instance;
+    public ObservableCollection<VersionChoice> VersionChoices { get; } = [];
+    [ObservableProperty] private VersionChoice? selectedVersion;
+    public bool HasVersionChoices => VersionChoices.Count > 1;
+    /// <summary>Offers Latest tracking, the installed version and newer versions of the same channel only.</summary>
+    public void SetVersions(IReadOnlyList<GameVersion> catalog)
+    {
+        var upgrades = GameVersion.UpgradesFor(instance, catalog);
+        var latest = instance.Channel == "Release" ? Text["LatestRelease"] : Text["LatestPreview"];
+        VersionChoices.Clear();
+        VersionChoices.Add(new(upgrades.FirstOrDefault()?.Version ?? instance.Version, true, $"{latest} · {upgrades.FirstOrDefault()?.Version ?? instance.Version}"));
+        VersionChoices.Add(new(instance.Version, false, $"{instance.Version} · {Text["InstalledVersion"]}"));
+        foreach (var version in upgrades) VersionChoices.Add(new(version.Version, false, version.Version));
+        SelectedVersion = instance.TrackUpdates ? VersionChoices[0]
+            : VersionChoices.Skip(1).FirstOrDefault(v => v.Version == instance.TargetVersion) ?? VersionChoices[1];
+        OnPropertyChanged(nameof(HasVersionChoices));
+    }
+    public (string Version, bool TrackUpdates)? VersionSelection =>
+        SelectedVersion is { } v && (v.TrackUpdates != instance.TrackUpdates || !v.TrackUpdates && v.Version != (instance.TargetVersion ?? instance.Version))
+            ? (v.Version, v.TrackUpdates) : null;
     public bool IsExisting => Card is not null;
     public bool CanEdit => Card?.Running != true;
     public void RefreshState() => OnPropertyChanged(nameof(CanEdit));
@@ -137,6 +161,7 @@ public partial class LaunchOptionsViewModel : ObservableObject
     {
         profileFor = profiles;
         this.hasMangoHudSystemConfiguration = hasMangoHudSystemConfiguration ?? DetectMangoHudSystemConfig;
+        this.instance = instance;
         InstanceId = instance.Id; name = instance.Name; desktopShortcut = instance.DesktopShortcut;
         Card = card;
         Text = text ?? new();

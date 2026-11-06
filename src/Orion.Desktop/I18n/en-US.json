@@ -276,6 +276,7 @@
   "LegacyChangelog": "Historical release", "FullLegacyChangelog": "Complete historical changelog (English)",
   "ChangelogHint": "Release notes bundled with this build, available offline. Current release notes are in English.",
   "LegacyChangelogWarning": "Historical release notes. These features are not necessarily available in the current version.",
+  "InstanceVersion": "Minecraft version", "InstanceVersionHint": "Updates are installed the next time you press Play. Only newer versions of the same channel (Release or Preview) are offered; worlds, prefixes and settings are kept.", "LatestRelease": "Latest Release", "LatestPreview": "Latest Preview", "InstalledVersion": "installed",
   "InstanceAccount": "Game account", "UseCurrentAccount": "Use the launcher's current account",
   "MissingInstanceAccount": "Account removed — choose another", "InstanceAccountHint": "Used when starting the game. Does not change the launcher's current account.",
   "CopyLog": "Copy logs", "CopyLogHint": "Copy the recent output shown here", "LogCopied": "Logs copied", "LogCopyError": "Could not copy logs.",

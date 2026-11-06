@@ -59,13 +59,14 @@ public sealed class InstanceService(IInstanceRepository repository, IGameInstall
     }
 
     public async Task SetConfigurationAsync(Guid id, string name, InstanceLaunchOptions options, string? coverId,
-        bool desktopShortcut, CancellationToken ct = default)
+        bool desktopShortcut, CancellationToken ct = default, (string Version, bool TrackUpdates)? version = null)
     {
         using var lease = activity.Acquire(id);
         if (launcher.IsRunning(id)) throw new InvalidOperationException("Stop the game before changing its configuration.");
         options.Validate(); GameInstance.ValidateCoverId(coverId);
         name = GameInstance.ValidateName(name);
         var instance = await repository.GetAsync(id, ct);
+        if (version is { } selection) instance = instance.WithVersionSelection(selection.Version, selection.TrackUpdates);
         await repository.SaveAsync(instance with { Name = name, LaunchOptions = options, CoverId = coverId, DesktopShortcut = desktopShortcut }, ct);
         await SynchronizeAsync(ct);
     }

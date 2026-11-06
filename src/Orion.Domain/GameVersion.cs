@@ -16,5 +16,12 @@ public sealed record GameVersion(string Version, string Channel, Uri Download)
         choices.AddRange(versions);
         return choices;
     }
+    /// <summary>Same-channel catalog versions newer than the installed game, newest first.</summary>
+    public static IReadOnlyList<GameVersion> UpgradesFor(GameInstance instance, IReadOnlyList<GameVersion> versions)
+    {
+        if (!System.Version.TryParse(instance.Version, out var installed)) return [];
+        return versions.Where(v => v.Channel == instance.Channel && System.Version.Parse(v.Version) > installed)
+            .OrderByDescending(v => System.Version.Parse(v.Version)).ToArray();
+    }
     public override string ToString() => DisplayName;
 }

@@ -24,8 +24,16 @@ public sealed class RollingGameUpdate(AppPaths paths, IVersionCatalog catalog, I
 
         // Once the old game is moved, finish the transaction even after interruption.
         if (Directory.Exists(backup)) instance = await CommitAsync(instance, next, backup, game);
-        if (!instance.TrackUpdates) return instance;
-        progress?.Report(new($"Checking for { (instance.Channel == "Release" ? "Latest Release" : "Latest Preview") } updates"));
+        if (!instance.TrackUpdates && instance.TargetVersion is null) return instance;
+        if (!instance.TrackUpdates && Version.Parse(instance.TargetVersion!) <= Version.Parse(instance.Version))
+        {
+            instance = instance with { TargetVersion = null };
+            await new InstanceRepository(paths).SaveAsync(instance, ct);
+            return instance;
+        }
+        progress?.Report(new(instance.TrackUpdates
+            ? $"Checking for {(instance.Channel == "Release" ? "Latest Release" : "Latest Preview")} updates"
+            : $"Preparing the update to Minecraft {instance.TargetVersion}"));
         IReadOnlyList<GameVersion> versions;
         try { versions = await catalog.GetAsync(ct); }
         catch (Exception ex) when (ex is HttpRequestException || ex is OperationCanceledException && !ct.IsCancellationRequested)
@@ -38,13 +46,20 @@ public sealed class RollingGameUpdate(AppPaths paths, IVersionCatalog catalog, I
             progress?.Report(new("Update check unavailable; using the installed game"));
             return instance;
         }
-        var latest = versions.Where(v => v.Channel == instance.Channel)
-            .OrderByDescending(v => Version.Parse(v.Version)).FirstOrDefault();
-        if (latest is null || Version.Parse(latest.Version) <= Version.Parse(instance.Version)) return instance;
-        progress?.Report(new($"Updating Minecraft {instance.Version} → {latest.Version}"));
+        // Only the instance's own channel is considered, and never a version older than the installed one.
+        var upgrades = GameVersion.UpgradesFor(instance, versions);
+        var target = instance.TrackUpdates ? upgrades.FirstOrDefault()
+            : upgrades.FirstOrDefault(v => Version.Parse(v.Version) == Version.Parse(instance.TargetVersion!));
+        if (target is null)
+        {
+            if (!instance.TrackUpdates)
+                progress?.Report(new($"Minecraft {instance.TargetVersion} is not in the {instance.Channel} catalog; using the installed game"));
+            return instance;
+        }
+        progress?.Report(new($"Updating Minecraft {instance.Version} → {target.Version}"));
         if (Directory.Exists(next)) Directory.Delete(next, true);
-        var updated = instance with { Version = latest.Version };
-        await installer.PrepareUpdateAsync(updated, latest.Download.AbsoluteUri, progress, ct);
+        var updated = instance with { Version = target.Version, TargetVersion = null };
+        await installer.PrepareUpdateAsync(updated, target.Download.AbsoluteUri, progress, ct);
         GameLayout.Validate(Path.Combine(next, "game"));
         ct.ThrowIfCancellationRequested();
         Directory.Move(game, backup);

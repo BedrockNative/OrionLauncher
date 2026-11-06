@@ -22,6 +22,11 @@
           <TextBlock Text="{Binding Text[Name]}" FontWeight="SemiBold" />
           <TextBox Text="{Binding Name}" MaxLength="80" />
         </StackPanel>
+        <StackPanel Spacing="6" IsVisible="{Binding HasVersionChoices}">
+          <TextBlock Text="{Binding Text[InstanceVersion]}" FontWeight="SemiBold" />
+          <ComboBox ItemsSource="{Binding VersionChoices}" SelectedItem="{Binding SelectedVersion}" HorizontalAlignment="Stretch" MaxDropDownHeight="320" />
+          <TextBlock Text="{Binding Text[InstanceVersionHint]}" Classes="muted" FontSize="12" TextWrapping="Wrap" />
+        </StackPanel>
         <StackPanel Spacing="6">
       <TextBlock Text="{Binding Text[InstanceAccount]}" FontWeight="SemiBold" />
       <ComboBox x:Name="InstanceAccountPicker" ItemsSource="{Binding AccountChoices}" SelectedItem="{Binding SelectedAccount}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch" MaxDropDownHeight="320">
