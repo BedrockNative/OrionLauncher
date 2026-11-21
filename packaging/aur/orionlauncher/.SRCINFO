@@ -1,0 +1,26 @@
+pkgbase = orionlauncher
+	pkgdesc = Minecraft Bedrock launcher for Linux
+	pkgver = 1.0.4
+	pkgrel = 1
+	url = https://github.com/BedrockNative/OrionLauncher
+	arch = x86_64
+	license = MIT
+	makedepends = git
+	makedepends = dotnet-sdk-10.0
+	depends = dotnet-runtime-10.0
+	depends = webkit2gtk-4.1
+	depends = libsecret
+	depends = fontconfig
+	depends = libx11
+	depends = libice
+	depends = libsm
+	depends = mesa
+	depends = vulkan-icd-loader
+	depends = xdg-utils
+	options = !strip
+	source = OrionLauncher::git+https://github.com/BedrockNative/OrionLauncher.git#commit=8135950795277a12f7df314ed430c048cec997ac
+	source = xvdtool::git+https://github.com/AmethystAPI/xvdtool.git#commit=0183cc9439fb90e216d7a408acef579b25caa598
+	sha256sums = SKIP
+	sha256sums = SKIP
+
+pkgname = orionlauncher

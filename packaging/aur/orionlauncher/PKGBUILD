@@ -1,0 +1,36 @@
+pkgname=orionlauncher
+pkgver=1.0.4
+pkgrel=1
+pkgdesc='Minecraft Bedrock launcher for Linux'
+arch=('x86_64')
+url='https://github.com/BedrockNative/OrionLauncher'
+license=('MIT')
+depends=('dotnet-runtime-10.0' 'webkit2gtk-4.1' 'libsecret' 'fontconfig' 'libx11' 'libice' 'libsm' 'mesa' 'vulkan-icd-loader' 'xdg-utils')
+makedepends=('git' 'dotnet-sdk-10.0')
+options=('!strip')
+source=("OrionLauncher::git+${url}.git#commit=8135950795277a12f7df314ed430c048cec997ac"
+        'xvdtool::git+https://github.com/AmethystAPI/xvdtool.git#commit=0183cc9439fb90e216d7a408acef579b25caa598')
+sha256sums=('SKIP' 'SKIP')
+
+prepare() {
+    cd OrionLauncher
+    git submodule init
+    git config submodule.third_party/xvdtool.url "$srcdir/xvdtool"
+    git -c protocol.file.allow=always submodule update
+}
+
+build() {
+    cd OrionLauncher
+    dotnet publish src/Orion.Desktop -c Release -r linux-x64 --self-contained false \
+        -p:Version="$pkgver" -p:DebugType=None -o "$srcdir/publish"
+}
+
+package() {
+    cd OrionLauncher
+    install -d "$pkgdir"/{usr/lib/orionlauncher,usr/bin}
+    cp -a "$srcdir/publish/." "$pkgdir/usr/lib/orionlauncher/"
+    ln -s /usr/lib/orionlauncher/OrionLauncher "$pkgdir/usr/bin/OrionLauncher"
+    install -Dm644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+    install -Dm644 packaging/linux/io.bedrocknative.orion.desktop -t "$pkgdir/usr/share/applications"
+    install -Dm644 src/Orion.Desktop/Assets/orion.svg "$pkgdir/usr/share/icons/hicolor/scalable/apps/io.bedrocknative.orion.svg"
+}

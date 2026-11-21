@@ -1,0 +1,25 @@
+pkgname=orionlauncher-bin
+pkgver=1.0.4
+pkgrel=1
+pkgdesc='Minecraft Bedrock launcher for Linux (official binary)'
+arch=('x86_64')
+url='https://github.com/BedrockNative/OrionLauncher'
+license=('MIT')
+provides=("orionlauncher=$pkgver")
+conflicts=('orionlauncher')
+depends=('bash' 'glibc' 'gcc-libs' 'libx11' 'libxcb' 'mesa' 'vulkan-icd-loader' 'alsa-lib' 'libpulse' 'systemd-libs' 'xdg-utils')
+options=('!strip')
+_bundle="OrionLauncher-${pkgver}-linux-x64"
+source=("$url/releases/download/v$pkgver/$_bundle.tar.gz")
+sha256sums=('86f7c899f89234f48d67ef673ac9fd48f197b0d737ed23f67fe5feaf13e4a55d')
+
+package() {
+    cd "$_bundle"
+    install -d "$pkgdir"/{opt/orionlauncher,usr/bin}
+    cp -a . "$pkgdir/opt/orionlauncher/"
+    printf '%s\n' '#!/bin/sh' 'exec /opt/orionlauncher/AppRun "$@"' > "$pkgdir/usr/bin/OrionLauncher"
+    chmod 755 "$pkgdir/usr/bin/OrionLauncher"
+    install -Dm644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+    install -Dm644 io.bedrocknative.orion.desktop -t "$pkgdir/usr/share/applications"
+    install -Dm644 io.bedrocknative.orion.png -t "$pkgdir/usr/share/pixmaps"
+}

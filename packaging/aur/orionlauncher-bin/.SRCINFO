@@ -1,0 +1,25 @@
+pkgbase = orionlauncher-bin
+	pkgdesc = Minecraft Bedrock launcher for Linux (official binary)
+	pkgver = 1.0.4
+	pkgrel = 1
+	url = https://github.com/BedrockNative/OrionLauncher
+	arch = x86_64
+	license = MIT
+	depends = bash
+	depends = glibc
+	depends = gcc-libs
+	depends = libx11
+	depends = libxcb
+	depends = mesa
+	depends = vulkan-icd-loader
+	depends = alsa-lib
+	depends = libpulse
+	depends = systemd-libs
+	depends = xdg-utils
+	provides = orionlauncher=1.0.4
+	conflicts = orionlauncher
+	options = !strip
+	source = https://github.com/BedrockNative/OrionLauncher/releases/download/v1.0.4/OrionLauncher-1.0.4-linux-x64.tar.gz
+	sha256sums = 86f7c899f89234f48d67ef673ac9fd48f197b0d737ed23f67fe5feaf13e4a55d
+
+pkgname = orionlauncher-bin
